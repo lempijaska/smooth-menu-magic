@@ -5,10 +5,10 @@ const Index = () => {
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="text-center">
         <h1 className="text-4xl font-bold tracking-tight text-foreground">
-          Floating Menu
+          Drag the menu around
         </h1>
         <p className="mt-3 text-muted-foreground">
-          Click the <span className="text-primary">⋯</span> button to see the vortex animation
+          Click anywhere on the canvas to close it
         </p>
       </div>
       <FloatingMenu />
