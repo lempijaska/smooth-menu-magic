@@ -47,6 +47,9 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        "menu-glass": "hsl(var(--menu-glass))",
+        "menu-glass-border": "hsl(var(--menu-glass-border))",
+        "menu-glow": "hsl(var(--menu-glow))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -57,6 +60,7 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+      },
       },
       borderRadius: {
         lg: "var(--radius)",

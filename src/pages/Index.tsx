@@ -1,16 +1,19 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import FloatingMenu from "@/components/FloatingMenu";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold tracking-tight text-foreground">
+          Floating Menu
+        </h1>
+        <p className="mt-3 text-muted-foreground">
+          Click the <span className="text-primary">⋯</span> button to see the vortex animation
+        </p>
+      </div>
+      <FloatingMenu />
     </div>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;
