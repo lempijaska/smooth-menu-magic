@@ -332,25 +332,35 @@ const FloatingMenu = () => {
                   const Icon = item.icon;
                   const isActive = activeItem === item.id;
                   const isBeingDragged = draggedItemId === item.id;
-                  const isDropTarget = dropTargetIndex === i;
+                  const isInsertTarget = dropTargetIndex === i && dropMode === "insert" && isDragActive;
+                  const isReplaceTarget = dropTargetIndex === i && dropMode === "replace" && isDragActive;
 
                   return (
                     <div key={item.id}>
-                      {isDropTarget && isDragActive && (
-                        <div className="mx-auto mb-1 h-1 w-6 rounded-full bg-primary animate-pulse" />
-                      )}
+                      {/* Gap drop zone before this item (insert mode) */}
+                      <div
+                        className="h-1.5 w-10 flex items-center justify-center"
+                        onDragOver={(e) => onGapDragOver(e, i)}
+                        onDrop={(e) => onPinnedDrop(e, i, "insert")}
+                      >
+                        {isInsertTarget && (
+                          <div className="h-1 w-6 rounded-full bg-primary animate-pulse" />
+                        )}
+                      </div>
                       <motion.button
                         draggable
                         onDragStart={(e) => onItemDragStart(e as unknown as React.DragEvent, item.id)}
                         onDragEnd={onItemDragEnd}
-                        onDragOver={(e) => onPinnedDragOver(e as unknown as React.DragEvent, i)}
-                        onDrop={(e) => onPinnedDrop(e as unknown as React.DragEvent, i)}
+                        onDragOver={(e) => onItemDragOver(e as unknown as React.DragEvent, i)}
+                        onDrop={(e) => onPinnedDrop(e as unknown as React.DragEvent, i, "replace")}
                         className={`group relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors cursor-grab active:cursor-grabbing ${
                           isBeingDragged ? "opacity-30" : ""
                         } ${
-                          isActive
-                            ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(var(--menu-glow)/0.35)]"
-                            : "text-muted-foreground hover:bg-secondary hover:text-primary"
+                          isReplaceTarget
+                            ? "ring-2 ring-primary bg-primary/20"
+                            : isActive
+                              ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(var(--menu-glow)/0.35)]"
+                              : "text-muted-foreground hover:bg-secondary hover:text-primary"
                         }`}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: isBeingDragged ? 0.3 : 1, x: 0 }}
@@ -366,6 +376,18 @@ const FloatingMenu = () => {
                     </div>
                   );
                 })}
+                {/* Gap drop zone after last item */}
+                {isDragActive && (
+                  <div
+                    className="h-1.5 w-10 flex items-center justify-center"
+                    onDragOver={(e) => onGapDragOver(e, pinnedIds.length)}
+                    onDrop={(e) => onPinnedDrop(e, pinnedIds.length, "insert")}
+                  >
+                    {dropTargetIndex === pinnedIds.length && dropMode === "insert" && (
+                      <div className="h-1 w-6 rounded-full bg-primary animate-pulse" />
+                    )}
+                  </div>
+                )}
 
                 {/* Drop indicator at end */}
                 {isDragActive && dropTargetIndex === pinnedIds.length && (
