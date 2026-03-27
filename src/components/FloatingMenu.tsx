@@ -78,6 +78,7 @@ const FloatingMenu = () => {
   // Drag-and-drop state
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+  const [dropMode, setDropMode] = useState<"replace" | "insert">("insert");
   const [dropOnMore, setDropOnMore] = useState(false);
 
   // Menu direction (up or down)
