@@ -138,7 +138,17 @@ const FloatingMenu = () => {
   const handleTriggerClick = () => {
     if (hasMoved.current) return;
     if (menuOpen) { setMenuOpen(false); setMoreOpen(false); }
-    else setMenuOpen(true);
+    else {
+      // Determine direction based on available space
+      if (triggerRef.current) {
+        const rect = triggerRef.current.getBoundingClientRect();
+        const menuHeight = (MAX_PINNED + 1) * 44 + 40; // items + more + padding
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const spaceAbove = rect.top;
+        setOpenDirection(spaceBelow >= menuHeight || spaceBelow >= spaceAbove ? "down" : "up");
+      }
+      setMenuOpen(true);
+    }
   };
 
   const handleMoreClick = () => {
