@@ -361,7 +361,7 @@ const FloatingMenu = () => {
         <AnimatePresence>
           {moreOpen && menuOpen && (
             <motion.div
-              className={`mt-14 grid grid-cols-5 gap-1.5 rounded-2xl border p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] max-h-[70vh] overflow-y-auto transition-colors ${
+              className={`mt-14 grid grid-cols-5 gap-1.5 rounded-2xl border p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] max-h-[70vh] overflow-y-auto overflow-x-hidden transition-colors ${
                 isDragActive && dropOnMore
                   ? "border-destructive/50 bg-menu-glass/95"
                   : "border-menu-glass-border bg-menu-glass/90"
