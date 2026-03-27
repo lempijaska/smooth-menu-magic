@@ -139,12 +139,16 @@ const FloatingMenu = () => {
     if (hasMoved.current) return;
     if (menuOpen) { setMenuOpen(false); setMoreOpen(false); }
     else {
-      // Determine direction based on available space
+      // Determine direction based on available space in the document, not just viewport
       if (triggerRef.current) {
         const rect = triggerRef.current.getBoundingClientRect();
-        const menuHeight = (MAX_PINNED + 1) * 44 + 40; // items + more + padding
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const spaceAbove = rect.top;
+        const menuHeight = (MAX_PINNED + 1) * 44 + 40;
+        const docHeight = document.documentElement.scrollHeight;
+        const scrollTop = window.scrollY || document.documentElement.scrollTop;
+        const triggerBottomInDoc = rect.bottom + scrollTop;
+        const triggerTopInDoc = rect.top + scrollTop;
+        const spaceBelow = docHeight - triggerBottomInDoc;
+        const spaceAbove = triggerTopInDoc;
         setOpenDirection(spaceBelow >= menuHeight || spaceBelow >= spaceAbove ? "down" : "up");
       }
       setMenuOpen(true);
@@ -190,14 +194,18 @@ const FloatingMenu = () => {
 
     setPinnedIds((prev) => {
       const wasPinned = prev.includes(draggedItemId);
-      const without = prev.filter((id) => id !== draggedItemId);
-      const newList = [...without];
-      newList.splice(index, 0, draggedItemId);
-      // Cap at MAX_PINNED: if adding a new item and over limit, remove the last
-      if (!wasPinned && newList.length > MAX_PINNED) {
-        newList.pop();
+      if (wasPinned) {
+        // Reordering within pinned: remove and insert at new position
+        const without = prev.filter((id) => id !== draggedItemId);
+        const newList = [...without];
+        newList.splice(index, 0, draggedItemId);
+        return newList;
+      } else {
+        // Coming from "more" grid: replace the item at this index
+        const newList = [...prev];
+        newList[index] = draggedItemId;
+        return newList;
       }
-      return newList.slice(0, MAX_PINNED);
     });
     onItemDragEnd();
   };
