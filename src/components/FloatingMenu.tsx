@@ -66,7 +66,8 @@ const allItems: MenuItem[] = [
   { id: "zap2", icon: Zap, label: "Power" },
 ];
 
-const DEFAULT_PINNED_IDS = ["home", "search", "bell", "heart", "mail", "user", "settings"];
+const MAX_PINNED = 8;
+const DEFAULT_PINNED_IDS = ["home", "search", "bell", "heart", "mail", "user", "settings", "bookmark"];
 
 const FloatingMenu = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -78,6 +79,10 @@ const FloatingMenu = () => {
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const [dropOnMore, setDropOnMore] = useState(false);
+
+  // Menu direction (up or down)
+  const [openDirection, setOpenDirection] = useState<"down" | "up">("down");
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   // Menu position drag state
   const [pos, setPos] = useState({ x: 24, y: 300 });
@@ -133,7 +138,17 @@ const FloatingMenu = () => {
   const handleTriggerClick = () => {
     if (hasMoved.current) return;
     if (menuOpen) { setMenuOpen(false); setMoreOpen(false); }
-    else setMenuOpen(true);
+    else {
+      // Determine direction based on available space
+      if (triggerRef.current) {
+        const rect = triggerRef.current.getBoundingClientRect();
+        const menuHeight = (MAX_PINNED + 1) * 44 + 40; // items + more + padding
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const spaceAbove = rect.top;
+        setOpenDirection(spaceBelow >= menuHeight || spaceBelow >= spaceAbove ? "down" : "up");
+      }
+      setMenuOpen(true);
+    }
   };
 
   const handleMoreClick = () => {
@@ -174,10 +189,15 @@ const FloatingMenu = () => {
     if (!draggedItemId) return;
 
     setPinnedIds((prev) => {
+      const wasPinned = prev.includes(draggedItemId);
       const without = prev.filter((id) => id !== draggedItemId);
       const newList = [...without];
       newList.splice(index, 0, draggedItemId);
-      return newList;
+      // Cap at MAX_PINNED: if adding a new item and over limit, remove the last
+      if (!wasPinned && newList.length > MAX_PINNED) {
+        newList.pop();
+      }
+      return newList.slice(0, MAX_PINNED);
     });
     onItemDragEnd();
   };
@@ -212,7 +232,12 @@ const FloatingMenu = () => {
 
     setPinnedIds((prev) => {
       if (prev.includes(draggedItemId)) return prev;
-      return [...prev, draggedItemId];
+      const newList = [...prev, draggedItemId];
+      if (newList.length > MAX_PINNED) {
+        newList.splice(MAX_PINNED - 1, 0, newList.pop()!);
+        return newList.slice(0, MAX_PINNED);
+      }
+      return newList;
     });
     onItemDragEnd();
   };
@@ -231,6 +256,7 @@ const FloatingMenu = () => {
           {/* Trigger button */}
           <motion.button
             className="flex h-12 w-12 items-center justify-center rounded-2xl border border-menu-glass-border bg-menu-glass/90 text-foreground backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.15)] cursor-grab active:cursor-grabbing"
+            ref={triggerRef}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleTriggerClick}
@@ -245,12 +271,14 @@ const FloatingMenu = () => {
           <AnimatePresence>
             {menuOpen && (
               <motion.div
-                className={`mt-2 flex flex-col gap-1.5 rounded-2xl border p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] transition-colors ${
+                className={`flex flex-col gap-1.5 rounded-2xl border p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] transition-colors ${
+                  openDirection === "down" ? "mt-2" : "mb-2 order-first"
+                } ${
                   isDragActive && !dropOnMore
                     ? "border-primary/50 bg-menu-glass/95"
                     : "border-menu-glass-border bg-menu-glass/90"
                 }`}
-                initial={{ opacity: 0, scaleY: 0, originY: 0 }}
+                initial={{ opacity: 0, scaleY: 0, originY: openDirection === "down" ? 0 : 1 }}
                 animate={{ opacity: 1, scaleY: 1 }}
                 exit={{ opacity: 0, scaleY: 0 }}
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
@@ -333,7 +361,7 @@ const FloatingMenu = () => {
         <AnimatePresence>
           {moreOpen && menuOpen && (
             <motion.div
-              className={`mt-14 grid grid-cols-5 gap-1.5 rounded-2xl border p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] max-h-[70vh] overflow-y-auto transition-colors ${
+              className={`mt-14 grid grid-cols-5 gap-1.5 rounded-2xl border p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] max-h-[70vh] overflow-y-auto overflow-x-hidden transition-colors ${
                 isDragActive && dropOnMore
                   ? "border-destructive/50 bg-menu-glass/95"
                   : "border-menu-glass-border bg-menu-glass/90"
