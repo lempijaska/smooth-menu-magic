@@ -1,115 +1,85 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Menu,
-  Home,
-  Search,
-  Bell,
-  Heart,
-  User,
-  Settings,
-  MoreHorizontal,
-  Mail,
-  Bookmark,
-  Share2,
-  Camera,
-  Zap,
-  Globe,
-  Music,
-  Video,
-  Image,
-  FileText,
-  Folder,
-  Archive,
-  Cloud,
-  Lock,
-  Unlock,
-  Star,
-  Sun,
-  Moon,
-  Coffee,
-  Gift,
-  Award,
-  Target,
-  Flag,
-  Map,
-  Compass,
-  Wifi,
-  Battery,
-  Monitor,
-  Smartphone,
-  Tablet,
-  Watch,
-  Headphones,
-  Mic,
-  Volume2,
-  Download,
-  Upload,
-  Printer,
-  Trash2,
-  Edit,
-  Eye,
+  Menu, Home, Search, Bell, Heart, User, Settings, MoreHorizontal,
+  Mail, Bookmark, Share2, Camera, Zap, Globe, Music, Video, Image,
+  FileText, Folder, Archive, Cloud, Lock, Unlock, Star, Sun, Moon,
+  Coffee, Gift, Award, Target, Flag, Map, Compass, Wifi, Battery,
+  Monitor, Smartphone, Tablet, Watch, Headphones, Mic, Volume2,
+  Download, Upload, Printer, Trash2, Edit, Eye,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
-const mainItems = [
-  { icon: Home, label: "Home" },
-  { icon: Search, label: "Search" },
-  { icon: Bell, label: "Notifications" },
-  { icon: Heart, label: "Favorites" },
-  { icon: Mail, label: "Messages" },
-  { icon: User, label: "Profile" },
-  { icon: Settings, label: "Settings" },
+interface MenuItem {
+  id: string;
+  icon: LucideIcon;
+  label: string;
+}
+
+const allItems: MenuItem[] = [
+  { id: "home", icon: Home, label: "Home" },
+  { id: "search", icon: Search, label: "Search" },
+  { id: "bell", icon: Bell, label: "Notifications" },
+  { id: "heart", icon: Heart, label: "Favorites" },
+  { id: "mail", icon: Mail, label: "Messages" },
+  { id: "user", icon: User, label: "Profile" },
+  { id: "settings", icon: Settings, label: "Settings" },
+  { id: "bookmark", icon: Bookmark, label: "Bookmarks" },
+  { id: "share", icon: Share2, label: "Share" },
+  { id: "camera", icon: Camera, label: "Camera" },
+  { id: "zap", icon: Zap, label: "Quick Actions" },
+  { id: "globe", icon: Globe, label: "Globe" },
+  { id: "music", icon: Music, label: "Music" },
+  { id: "video", icon: Video, label: "Video" },
+  { id: "image", icon: Image, label: "Images" },
+  { id: "filetext", icon: FileText, label: "Documents" },
+  { id: "folder", icon: Folder, label: "Folders" },
+  { id: "archive", icon: Archive, label: "Archive" },
+  { id: "cloud", icon: Cloud, label: "Cloud" },
+  { id: "lock", icon: Lock, label: "Lock" },
+  { id: "unlock", icon: Unlock, label: "Unlock" },
+  { id: "star", icon: Star, label: "Starred" },
+  { id: "sun", icon: Sun, label: "Light Mode" },
+  { id: "moon", icon: Moon, label: "Dark Mode" },
+  { id: "coffee", icon: Coffee, label: "Break" },
+  { id: "gift", icon: Gift, label: "Gifts" },
+  { id: "award", icon: Award, label: "Awards" },
+  { id: "target", icon: Target, label: "Goals" },
+  { id: "flag", icon: Flag, label: "Flagged" },
+  { id: "map", icon: Map, label: "Maps" },
+  { id: "compass", icon: Compass, label: "Navigate" },
+  { id: "wifi", icon: Wifi, label: "Network" },
+  { id: "battery", icon: Battery, label: "Battery" },
+  { id: "monitor", icon: Monitor, label: "Desktop" },
+  { id: "smartphone", icon: Smartphone, label: "Mobile" },
+  { id: "tablet", icon: Tablet, label: "Tablet" },
+  { id: "watch", icon: Watch, label: "Watch" },
+  { id: "headphones", icon: Headphones, label: "Audio" },
+  { id: "mic", icon: Mic, label: "Microphone" },
+  { id: "volume", icon: Volume2, label: "Volume" },
+  { id: "download", icon: Download, label: "Downloads" },
+  { id: "upload", icon: Upload, label: "Uploads" },
+  { id: "printer", icon: Printer, label: "Print" },
+  { id: "trash", icon: Trash2, label: "Trash" },
+  { id: "edit", icon: Edit, label: "Edit" },
+  { id: "eye", icon: Eye, label: "Preview" },
+  { id: "zap2", icon: Zap, label: "Power" },
 ];
 
-const moreItems = [
-  { icon: Bookmark, label: "Bookmarks" },
-  { icon: Share2, label: "Share" },
-  { icon: Camera, label: "Camera" },
-  { icon: Zap, label: "Quick Actions" },
-  { icon: Globe, label: "Globe" },
-  { icon: Music, label: "Music" },
-  { icon: Video, label: "Video" },
-  { icon: Image, label: "Images" },
-  { icon: FileText, label: "Documents" },
-  { icon: Folder, label: "Folders" },
-  { icon: Archive, label: "Archive" },
-  { icon: Cloud, label: "Cloud" },
-  { icon: Lock, label: "Lock" },
-  { icon: Unlock, label: "Unlock" },
-  { icon: Star, label: "Starred" },
-  { icon: Sun, label: "Light Mode" },
-  { icon: Moon, label: "Dark Mode" },
-  { icon: Coffee, label: "Break" },
-  { icon: Gift, label: "Gifts" },
-  { icon: Award, label: "Awards" },
-  { icon: Target, label: "Goals" },
-  { icon: Flag, label: "Flagged" },
-  { icon: Map, label: "Maps" },
-  { icon: Compass, label: "Navigate" },
-  { icon: Wifi, label: "Network" },
-  { icon: Battery, label: "Battery" },
-  { icon: Monitor, label: "Desktop" },
-  { icon: Smartphone, label: "Mobile" },
-  { icon: Tablet, label: "Tablet" },
-  { icon: Watch, label: "Watch" },
-  { icon: Headphones, label: "Audio" },
-  { icon: Mic, label: "Microphone" },
-  { icon: Volume2, label: "Volume" },
-  { icon: Download, label: "Downloads" },
-  { icon: Upload, label: "Uploads" },
-  { icon: Printer, label: "Print" },
-  { icon: Trash2, label: "Trash" },
-  { icon: Edit, label: "Edit" },
-  { icon: Eye, label: "Preview" },
-  { icon: Zap, label: "Power" },
-];
+const DEFAULT_PINNED_IDS = ["home", "search", "bell", "heart", "mail", "user", "settings"];
 
 const FloatingMenu = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const [activeItem, setActiveItem] = useState("Home");
+  const [activeItem, setActiveItem] = useState("home");
+  const [pinnedIds, setPinnedIds] = useState<string[]>(DEFAULT_PINNED_IDS);
 
-  // Drag state
+  // Drag-and-drop state
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+  const [dropOnMore, setDropOnMore] = useState(false);
+
+  // Menu position drag state
   const [pos, setPos] = useState({ x: 24, y: 300 });
   const dragRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
@@ -117,6 +87,17 @@ const FloatingMenu = () => {
   const posStart = useRef({ x: 0, y: 0 });
   const hasMoved = useRef(false);
 
+  const pinnedItems = useMemo(
+    () => pinnedIds.map((id) => allItems.find((item) => item.id === id)!).filter(Boolean),
+    [pinnedIds]
+  );
+
+  const moreItems = useMemo(
+    () => allItems.filter((item) => !pinnedIds.includes(item.id)),
+    [pinnedIds]
+  );
+
+  // --- Menu position dragging ---
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     isDragging.current = true;
     hasMoved.current = false;
@@ -130,10 +111,7 @@ const FloatingMenu = () => {
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved.current = true;
-    setPos({
-      x: posStart.current.x + dx,
-      y: posStart.current.y + dy,
-    });
+    setPos({ x: posStart.current.x + dx, y: posStart.current.y + dy });
   }, []);
 
   const onPointerUp = useCallback(() => {
@@ -154,12 +132,8 @@ const FloatingMenu = () => {
 
   const handleTriggerClick = () => {
     if (hasMoved.current) return;
-    if (menuOpen) {
-      setMenuOpen(false);
-      setMoreOpen(false);
-    } else {
-      setMenuOpen(true);
-    }
+    if (menuOpen) { setMenuOpen(false); setMoreOpen(false); }
+    else setMenuOpen(true);
   };
 
   const handleMoreClick = () => {
@@ -167,29 +141,102 @@ const FloatingMenu = () => {
     setMoreOpen((v) => !v);
   };
 
-  const handleItemClick = (label: string) => {
+  const handleItemClick = (id: string) => {
     if (hasMoved.current) return;
-    setActiveItem(label);
+    setActiveItem(id);
   };
+
+  // --- Item drag-and-drop handlers ---
+  const onItemDragStart = (e: React.DragEvent, id: string) => {
+    e.stopPropagation();
+    setDraggedItemId(id);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", id);
+  };
+
+  const onItemDragEnd = () => {
+    setDraggedItemId(null);
+    setDropTargetIndex(null);
+    setDropOnMore(false);
+  };
+
+  // Drop onto a pinned slot (insert at index)
+  const onPinnedDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropTargetIndex(index);
+    setDropOnMore(false);
+  };
+
+  const onPinnedDrop = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!draggedItemId) return;
+
+    setPinnedIds((prev) => {
+      const without = prev.filter((id) => id !== draggedItemId);
+      const newList = [...without];
+      newList.splice(index, 0, draggedItemId);
+      return newList;
+    });
+    onItemDragEnd();
+  };
+
+  // Drop onto the "more" grid (remove from pinned)
+  const onMoreDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropOnMore(true);
+    setDropTargetIndex(null);
+  };
+
+  const onMoreDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!draggedItemId) return;
+
+    setPinnedIds((prev) => prev.filter((id) => id !== draggedItemId));
+    onItemDragEnd();
+  };
+
+  // Drop onto the vertical menu container itself (append)
+  const onMenuContainerDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDropTargetIndex(pinnedIds.length);
+    setDropOnMore(false);
+  };
+
+  const onMenuContainerDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!draggedItemId) return;
+
+    setPinnedIds((prev) => {
+      if (prev.includes(draggedItemId)) return prev;
+      return [...prev, draggedItemId];
+    });
+    onItemDragEnd();
+  };
+
+  const isDragActive = draggedItemId !== null;
 
   return (
     <div
       ref={dragRef}
       className="fixed z-50 select-none"
       style={{ left: pos.x, top: pos.y }}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
     >
       <div className="flex items-start gap-3">
         {/* Trigger + main menu column */}
         <div className="flex flex-col items-center gap-0">
-          {/* Trigger button (always visible) */}
+          {/* Trigger button */}
           <motion.button
             className="flex h-12 w-12 items-center justify-center rounded-2xl border border-menu-glass-border bg-menu-glass/90 text-foreground backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.15)] cursor-grab active:cursor-grabbing"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleTriggerClick}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
           >
             <Menu className="h-5 w-5" />
           </motion.button>
@@ -198,36 +245,61 @@ const FloatingMenu = () => {
           <AnimatePresence>
             {menuOpen && (
               <motion.div
-                className="mt-2 flex flex-col gap-1.5 rounded-2xl border border-menu-glass-border bg-menu-glass/90 p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)]"
+                className={`mt-2 flex flex-col gap-1.5 rounded-2xl border p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] transition-colors ${
+                  isDragActive && !dropOnMore
+                    ? "border-primary/50 bg-menu-glass/95"
+                    : "border-menu-glass-border bg-menu-glass/90"
+                }`}
                 initial={{ opacity: 0, scaleY: 0, originY: 0 }}
                 animate={{ opacity: 1, scaleY: 1 }}
                 exit={{ opacity: 0, scaleY: 0 }}
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                onDragOver={onMenuContainerDragOver}
+                onDrop={onMenuContainerDrop}
               >
-                {mainItems.map((item, i) => {
+                {pinnedItems.map((item, i) => {
                   const Icon = item.icon;
-                  const isActive = activeItem === item.label;
+                  const isActive = activeItem === item.id;
+                  const isBeingDragged = draggedItemId === item.id;
+                  const isDropTarget = dropTargetIndex === i;
+
                   return (
-                    <motion.button
-                      key={item.label}
-                      className={`group relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
-                        isActive
-                          ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(var(--menu-glow)/0.35)]"
-                          : "text-muted-foreground hover:bg-secondary hover:text-primary"
-                      }`}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ delay: i * 0.03, type: "spring", stiffness: 500, damping: 28 }}
-                      onClick={() => handleItemClick(item.label)}
-                    >
-                      <Icon className="h-4.5 w-4.5" />
-                      <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground opacity-0 transition-opacity group-hover:opacity-100">
-                        {item.label}
-                      </span>
-                    </motion.button>
+                    <div key={item.id}>
+                      {isDropTarget && isDragActive && (
+                        <div className="mx-auto mb-1 h-1 w-6 rounded-full bg-primary animate-pulse" />
+                      )}
+                      <motion.button
+                        draggable
+                        onDragStart={(e) => onItemDragStart(e as unknown as React.DragEvent, item.id)}
+                        onDragEnd={onItemDragEnd}
+                        onDragOver={(e) => onPinnedDragOver(e as unknown as React.DragEvent, i)}
+                        onDrop={(e) => onPinnedDrop(e as unknown as React.DragEvent, i)}
+                        className={`group relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors cursor-grab active:cursor-grabbing ${
+                          isBeingDragged ? "opacity-30" : ""
+                        } ${
+                          isActive
+                            ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(var(--menu-glow)/0.35)]"
+                            : "text-muted-foreground hover:bg-secondary hover:text-primary"
+                        }`}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: isBeingDragged ? 0.3 : 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ delay: i * 0.03, type: "spring", stiffness: 500, damping: 28 }}
+                        onClick={() => handleItemClick(item.id)}
+                      >
+                        <Icon className="h-4.5 w-4.5 pointer-events-none" />
+                        <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground opacity-0 transition-opacity group-hover:opacity-100">
+                          {item.label}
+                        </span>
+                      </motion.button>
+                    </div>
                   );
                 })}
+
+                {/* Drop indicator at end */}
+                {isDragActive && dropTargetIndex === pinnedIds.length && (
+                  <div className="mx-auto mt-1 h-1 w-6 rounded-full bg-primary animate-pulse" />
+                )}
 
                 {/* Divider */}
                 <div className="mx-auto h-px w-6 bg-border" />
@@ -242,7 +314,7 @@ const FloatingMenu = () => {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  transition={{ delay: mainItems.length * 0.03, type: "spring", stiffness: 500, damping: 28 }}
+                  transition={{ delay: pinnedItems.length * 0.03, type: "spring", stiffness: 500, damping: 28 }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleMoreClick}
@@ -261,30 +333,42 @@ const FloatingMenu = () => {
         <AnimatePresence>
           {moreOpen && menuOpen && (
             <motion.div
-              className="mt-14 grid grid-cols-5 gap-1.5 rounded-2xl border border-menu-glass-border bg-menu-glass/90 p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] max-h-[70vh] overflow-y-auto"
+              className={`mt-14 grid grid-cols-5 gap-1.5 rounded-2xl border p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] max-h-[70vh] overflow-y-auto transition-colors ${
+                isDragActive && dropOnMore
+                  ? "border-destructive/50 bg-menu-glass/95"
+                  : "border-menu-glass-border bg-menu-glass/90"
+              }`}
               initial={{ opacity: 0, scale: 0.5, x: -20 }}
               animate={{ opacity: 1, scale: 1, x: 0 }}
               exit={{ opacity: 0, scale: 0.5, x: -20 }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              onDragOver={onMoreDragOver}
+              onDrop={onMoreDrop}
             >
+              {moreItems.length === 0 && (
+                <div className="col-span-5 py-4 text-center text-xs text-muted-foreground">
+                  All items pinned
+                </div>
+              )}
               {moreItems.map((item, i) => {
                 const Icon = item.icon;
+                const isBeingDragged = draggedItemId === item.id;
                 return (
                   <motion.button
-                    key={item.label + i}
-                    className="group relative flex h-10 w-10 flex-col items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
+                    key={item.id}
+                    draggable
+                    onDragStart={(e) => onItemDragStart(e as unknown as React.DragEvent, item.id)}
+                    onDragEnd={onItemDragEnd}
+                    className={`group relative flex h-10 w-10 flex-col items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-primary cursor-grab active:cursor-grabbing ${
+                      isBeingDragged ? "opacity-30" : ""
+                    }`}
                     initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
+                    animate={{ opacity: isBeingDragged ? 0.3 : 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0 }}
-                    transition={{
-                      delay: i * 0.015,
-                      type: "spring",
-                      stiffness: 500,
-                      damping: 22,
-                    }}
-                    onClick={() => handleItemClick(item.label)}
+                    transition={{ delay: i * 0.015, type: "spring", stiffness: 500, damping: 22 }}
+                    onClick={() => handleItemClick(item.id)}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className="h-4 w-4 pointer-events-none" />
                     <span className="pointer-events-none absolute top-full mt-1 whitespace-nowrap rounded-lg bg-secondary px-2 py-1 text-[10px] font-medium text-secondary-foreground opacity-0 transition-opacity group-hover:opacity-100 z-10">
                       {item.label}
                     </span>
