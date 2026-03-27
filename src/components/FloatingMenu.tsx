@@ -136,22 +136,26 @@ const FloatingMenu = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // Compute direction based on position within the document
+  const computeDirection = useCallback(() => {
+    const menuHeight = (MAX_PINNED + 1) * 44 + 40;
+    const docHeight = document.documentElement.scrollHeight;
+    const triggerBottom = pos.y + 48; // trigger button height
+    const spaceBelow = docHeight - triggerBottom;
+    const spaceAbove = pos.y;
+    return spaceBelow >= menuHeight || spaceBelow >= spaceAbove ? "down" : "up";
+  }, [pos.y]);
+
+  // Update direction whenever position changes
+  useEffect(() => {
+    setOpenDirection(computeDirection());
+  }, [computeDirection]);
+
   const handleTriggerClick = () => {
     if (hasMoved.current) return;
     if (menuOpen) { setMenuOpen(false); setMoreOpen(false); }
     else {
-      // Determine direction based on available space in the document, not just viewport
-      if (triggerRef.current) {
-        const rect = triggerRef.current.getBoundingClientRect();
-        const menuHeight = (MAX_PINNED + 1) * 44 + 40;
-        const docHeight = document.documentElement.scrollHeight;
-        const scrollTop = window.scrollY || document.documentElement.scrollTop;
-        const triggerBottomInDoc = rect.bottom + scrollTop;
-        const triggerTopInDoc = rect.top + scrollTop;
-        const spaceBelow = docHeight - triggerBottomInDoc;
-        const spaceAbove = triggerTopInDoc;
-        setOpenDirection(spaceBelow >= menuHeight || spaceBelow >= spaceAbove ? "down" : "up");
-      }
+      setOpenDirection(computeDirection());
       setMenuOpen(true);
     }
   };
