@@ -271,12 +271,14 @@ const FloatingMenu = () => {
           <AnimatePresence>
             {menuOpen && (
               <motion.div
-                className={`mt-2 flex flex-col gap-1.5 rounded-2xl border p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] transition-colors ${
+                className={`flex flex-col gap-1.5 rounded-2xl border p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] transition-colors ${
+                  openDirection === "down" ? "mt-2" : "mb-2 order-first"
+                } ${
                   isDragActive && !dropOnMore
                     ? "border-primary/50 bg-menu-glass/95"
                     : "border-menu-glass-border bg-menu-glass/90"
                 }`}
-                initial={{ opacity: 0, scaleY: 0, originY: 0 }}
+                initial={{ opacity: 0, scaleY: 0, originY: openDirection === "down" ? 0 : 1 }}
                 animate={{ opacity: 1, scaleY: 1 }}
                 exit={{ opacity: 0, scaleY: 0 }}
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
