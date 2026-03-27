@@ -189,10 +189,15 @@ const FloatingMenu = () => {
     if (!draggedItemId) return;
 
     setPinnedIds((prev) => {
+      const wasPinned = prev.includes(draggedItemId);
       const without = prev.filter((id) => id !== draggedItemId);
       const newList = [...without];
       newList.splice(index, 0, draggedItemId);
-      return newList;
+      // Cap at MAX_PINNED: if adding a new item and over limit, remove the last
+      if (!wasPinned && newList.length > MAX_PINNED) {
+        newList.pop();
+      }
+      return newList.slice(0, MAX_PINNED);
     });
     onItemDragEnd();
   };
