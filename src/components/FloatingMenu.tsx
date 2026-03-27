@@ -80,6 +80,10 @@ const FloatingMenu = () => {
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const [dropOnMore, setDropOnMore] = useState(false);
 
+  // Menu direction (up or down)
+  const [openDirection, setOpenDirection] = useState<"down" | "up">("down");
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
   // Menu position drag state
   const [pos, setPos] = useState({ x: 24, y: 300 });
   const dragRef = useRef<HTMLDivElement>(null);
