@@ -185,32 +185,61 @@ const FloatingMenu = () => {
     setDropOnMore(false);
   };
 
-  // Drop onto a pinned slot (insert at index)
-  const onPinnedDragOver = (e: React.DragEvent, index: number) => {
+  // Drag over a pinned item (replace mode)
+  const onItemDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     e.stopPropagation();
     setDropTargetIndex(index);
+    setDropMode("replace");
     setDropOnMore(false);
   };
 
-  const onPinnedDrop = (e: React.DragEvent, index: number) => {
+  // Drag over the gap between pinned items (insert mode)
+  const onGapDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropTargetIndex(index);
+    setDropMode("insert");
+    setDropOnMore(false);
+  };
+
+  const onPinnedDrop = (e: React.DragEvent, index: number, mode: "replace" | "insert") => {
     e.preventDefault();
     e.stopPropagation();
     if (!draggedItemId) return;
 
     setPinnedIds((prev) => {
       const wasPinned = prev.includes(draggedItemId);
-      if (wasPinned) {
-        // Reordering within pinned: remove and insert at new position
-        const without = prev.filter((id) => id !== draggedItemId);
-        const newList = [...without];
-        newList.splice(index, 0, draggedItemId);
-        return newList;
+      if (mode === "replace") {
+        if (wasPinned) {
+          // Swap positions
+          const dragIdx = prev.indexOf(draggedItemId);
+          const newList = [...prev];
+          newList[dragIdx] = prev[index];
+          newList[index] = draggedItemId;
+          return newList;
+        } else {
+          // Replace the item at this index, displaced item goes back to "more"
+          const newList = [...prev];
+          newList[index] = draggedItemId;
+          return newList;
+        }
       } else {
-        // Coming from "more" grid: replace the item at this index
-        const newList = [...prev];
-        newList[index] = draggedItemId;
-        return newList;
+        // Insert/shift mode
+        if (wasPinned) {
+          const without = prev.filter((id) => id !== draggedItemId);
+          const newList = [...without];
+          newList.splice(index, 0, draggedItemId);
+          return newList;
+        } else {
+          // Insert from more, push last item out if at max
+          const newList = [...prev];
+          newList.splice(index, 0, draggedItemId);
+          if (newList.length > MAX_PINNED) {
+            return newList.slice(0, MAX_PINNED);
+          }
+          return newList;
+        }
       }
     });
     onItemDragEnd();
