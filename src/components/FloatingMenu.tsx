@@ -232,7 +232,12 @@ const FloatingMenu = () => {
 
     setPinnedIds((prev) => {
       if (prev.includes(draggedItemId)) return prev;
-      return [...prev, draggedItemId];
+      const newList = [...prev, draggedItemId];
+      if (newList.length > MAX_PINNED) {
+        newList.splice(MAX_PINNED - 1, 0, newList.pop()!);
+        return newList.slice(0, MAX_PINNED);
+      }
+      return newList;
     });
     onItemDragEnd();
   };
