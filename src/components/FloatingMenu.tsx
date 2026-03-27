@@ -194,14 +194,18 @@ const FloatingMenu = () => {
 
     setPinnedIds((prev) => {
       const wasPinned = prev.includes(draggedItemId);
-      const without = prev.filter((id) => id !== draggedItemId);
-      const newList = [...without];
-      newList.splice(index, 0, draggedItemId);
-      // Cap at MAX_PINNED: if adding a new item and over limit, remove the last
-      if (!wasPinned && newList.length > MAX_PINNED) {
-        newList.pop();
+      if (wasPinned) {
+        // Reordering within pinned: remove and insert at new position
+        const without = prev.filter((id) => id !== draggedItemId);
+        const newList = [...without];
+        newList.splice(index, 0, draggedItemId);
+        return newList;
+      } else {
+        // Coming from "more" grid: replace the item at this index
+        const newList = [...prev];
+        newList[index] = draggedItemId;
+        return newList;
       }
-      return newList.slice(0, MAX_PINNED);
     });
     onItemDragEnd();
   };
