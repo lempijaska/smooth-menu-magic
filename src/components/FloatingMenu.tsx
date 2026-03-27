@@ -66,7 +66,8 @@ const allItems: MenuItem[] = [
   { id: "zap2", icon: Zap, label: "Power" },
 ];
 
-const DEFAULT_PINNED_IDS = ["home", "search", "bell", "heart", "mail", "user", "settings"];
+const MAX_PINNED = 8;
+const DEFAULT_PINNED_IDS = ["home", "search", "bell", "heart", "mail", "user", "settings", "bookmark"];
 
 const FloatingMenu = () => {
   const [menuOpen, setMenuOpen] = useState(false);
