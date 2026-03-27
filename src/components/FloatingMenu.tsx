@@ -181,6 +181,7 @@ const FloatingMenu = () => {
   const onItemDragEnd = () => {
     setDraggedItemId(null);
     setDropTargetIndex(null);
+    setDropMode("insert");
     setDropOnMore(false);
   };
 
