@@ -165,6 +165,7 @@ const FloatingMenu = () => {
     if (menuOpen) { setMenuOpen(false); setMoreOpen(false); }
     else {
       setOpenDirection(computeDirection());
+      setMoreOnLeft(computeMoreSide());
       setMenuOpen(true);
     }
   };
