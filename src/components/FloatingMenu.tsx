@@ -437,9 +437,9 @@ const FloatingMenu = () => {
                   ? "border-destructive/50 bg-menu-glass/95"
                   : "border-menu-glass-border bg-menu-glass/90"
               }`}
-              initial={{ opacity: 0, scale: 0.5, x: -20 }}
+              initial={{ opacity: 0, scale: 0.5, x: moreOnLeft ? 20 : -20 }}
               animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.5, x: -20 }}
+              exit={{ opacity: 0, scale: 0.5, x: moreOnLeft ? 20 : -20 }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
               onDragOver={onMoreDragOver}
               onDrop={onMoreDrop}
