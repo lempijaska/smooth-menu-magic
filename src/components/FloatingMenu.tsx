@@ -117,7 +117,10 @@ const FloatingMenu = () => {
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved.current = true;
-    setPos({ x: posStart.current.x + dx, y: posStart.current.y + dy });
+    const triggerSize = 48;
+    const newX = Math.max(0, Math.min(window.innerWidth - triggerSize, posStart.current.x + dx));
+    const newY = Math.max(0, Math.min(window.innerHeight - triggerSize, posStart.current.y + dy));
+    setPos({ x: newX, y: newY });
   }, []);
 
   const onPointerUp = useCallback(() => {
@@ -143,7 +146,8 @@ const FloatingMenu = () => {
     const triggerBottom = pos.y + 48;
     const spaceBelow = viewportHeight - triggerBottom;
     const spaceAbove = pos.y;
-    return spaceBelow >= menuHeight || spaceBelow >= spaceAbove ? "down" : "up";
+    if (spaceBelow < menuHeight && spaceAbove > spaceBelow) return "up";
+    return "down";
   }, [pos.y]);
 
   // Compute whether the "more" grid should appear on the left
@@ -432,7 +436,7 @@ const FloatingMenu = () => {
         <AnimatePresence>
           {moreOpen && menuOpen && (
             <motion.div
-              className={`mt-14 grid grid-cols-5 gap-1.5 rounded-2xl border p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] max-h-[70vh] overflow-y-auto overflow-x-hidden transition-colors ${
+              className={`mt-14 grid grid-cols-5 gap-1.5 rounded-2xl border p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] max-h-[70vh] overflow-y-auto overflow-x-hidden transition-colors w-[232px] min-h-[200px] ${
                 isDragActive && dropOnMore
                   ? "border-destructive/50 bg-menu-glass/95"
                   : "border-menu-glass-border bg-menu-glass/90"
