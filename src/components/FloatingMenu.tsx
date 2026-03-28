@@ -136,26 +136,36 @@ const FloatingMenu = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Compute direction based on position within the document
+  // Compute direction based on viewport
   const computeDirection = useCallback(() => {
     const menuHeight = (MAX_PINNED + 1) * 44 + 40;
-    const docHeight = document.documentElement.scrollHeight;
-    const triggerBottom = pos.y + 48; // trigger button height
-    const spaceBelow = docHeight - triggerBottom;
+    const viewportHeight = window.innerHeight;
+    const triggerBottom = pos.y + 48;
+    const spaceBelow = viewportHeight - triggerBottom;
     const spaceAbove = pos.y;
     return spaceBelow >= menuHeight || spaceBelow >= spaceAbove ? "down" : "up";
   }, [pos.y]);
 
-  // Update direction whenever position changes
+  // Compute whether the "more" grid should appear on the left
+  const [moreOnLeft, setMoreOnLeft] = useState(false);
+  const computeMoreSide = useCallback(() => {
+    const gridWidth = 5 * 40 + 4 * 6 + 16 + 12 + 56; // 5 cols * 40px + gaps + padding + gap + trigger col
+    const viewportWidth = window.innerWidth;
+    return pos.x + gridWidth > viewportWidth;
+  }, [pos.x]);
+
+  // Update direction and more-side whenever position changes
   useEffect(() => {
     setOpenDirection(computeDirection());
-  }, [computeDirection]);
+    setMoreOnLeft(computeMoreSide());
+  }, [computeDirection, computeMoreSide]);
 
   const handleTriggerClick = () => {
     if (hasMoved.current) return;
     if (menuOpen) { setMenuOpen(false); setMoreOpen(false); }
     else {
       setOpenDirection(computeDirection());
+      setMoreOnLeft(computeMoreSide());
       setMenuOpen(true);
     }
   };
@@ -293,7 +303,7 @@ const FloatingMenu = () => {
       className="fixed z-50 select-none"
       style={{ left: pos.x, top: pos.y }}
     >
-      <div className="flex items-start gap-3">
+      <div className={`flex items-start gap-3 ${moreOnLeft ? "flex-row-reverse" : ""}`}>
         {/* Trigger + main menu column */}
         <div className="flex flex-col items-center gap-0">
           {/* Trigger button */}
@@ -427,9 +437,9 @@ const FloatingMenu = () => {
                   ? "border-destructive/50 bg-menu-glass/95"
                   : "border-menu-glass-border bg-menu-glass/90"
               }`}
-              initial={{ opacity: 0, scale: 0.5, x: -20 }}
+              initial={{ opacity: 0, scale: 0.5, x: moreOnLeft ? 20 : -20 }}
               animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.5, x: -20 }}
+              exit={{ opacity: 0, scale: 0.5, x: moreOnLeft ? 20 : -20 }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
               onDragOver={onMoreDragOver}
               onDrop={onMoreDrop}
