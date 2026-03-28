@@ -117,7 +117,10 @@ const FloatingMenu = () => {
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved.current = true;
-    setPos({ x: posStart.current.x + dx, y: posStart.current.y + dy });
+    const triggerSize = 48;
+    const newX = Math.max(0, Math.min(window.innerWidth - triggerSize, posStart.current.x + dx));
+    const newY = Math.max(0, Math.min(window.innerHeight - triggerSize, posStart.current.y + dy));
+    setPos({ x: newX, y: newY });
   }, []);
 
   const onPointerUp = useCallback(() => {
