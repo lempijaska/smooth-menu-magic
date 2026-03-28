@@ -303,7 +303,7 @@ const FloatingMenu = () => {
       className="fixed z-50 select-none"
       style={{ left: pos.x, top: pos.y }}
     >
-      <div className="flex items-start gap-3">
+      <div className={`flex items-start gap-3 ${moreOnLeft ? "flex-row-reverse" : ""}`}>
         {/* Trigger + main menu column */}
         <div className="flex flex-col items-center gap-0">
           {/* Trigger button */}
