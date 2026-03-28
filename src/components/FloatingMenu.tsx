@@ -136,15 +136,23 @@ const FloatingMenu = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Compute direction based on position within the document
+  // Compute direction based on viewport
   const computeDirection = useCallback(() => {
     const menuHeight = (MAX_PINNED + 1) * 44 + 40;
-    const docHeight = document.documentElement.scrollHeight;
-    const triggerBottom = pos.y + 48; // trigger button height
-    const spaceBelow = docHeight - triggerBottom;
+    const viewportHeight = window.innerHeight;
+    const triggerBottom = pos.y + 48;
+    const spaceBelow = viewportHeight - triggerBottom;
     const spaceAbove = pos.y;
     return spaceBelow >= menuHeight || spaceBelow >= spaceAbove ? "down" : "up";
   }, [pos.y]);
+
+  // Compute whether the "more" grid should appear on the left
+  const [moreOnLeft, setMoreOnLeft] = useState(false);
+  const computeMoreSide = useCallback(() => {
+    const gridWidth = 5 * 40 + 4 * 6 + 16 + 12 + 56; // 5 cols * 40px + gaps + padding + gap + trigger col
+    const viewportWidth = window.innerWidth;
+    return pos.x + gridWidth > viewportWidth;
+  }, [pos.x]);
 
   // Update direction whenever position changes
   useEffect(() => {
