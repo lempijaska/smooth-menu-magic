@@ -154,10 +154,11 @@ const FloatingMenu = () => {
     return pos.x + gridWidth > viewportWidth;
   }, [pos.x]);
 
-  // Update direction whenever position changes
+  // Update direction and more-side whenever position changes
   useEffect(() => {
     setOpenDirection(computeDirection());
-  }, [computeDirection]);
+    setMoreOnLeft(computeMoreSide());
+  }, [computeDirection, computeMoreSide]);
 
   const handleTriggerClick = () => {
     if (hasMoved.current) return;
