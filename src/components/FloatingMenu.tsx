@@ -146,7 +146,8 @@ const FloatingMenu = () => {
     const triggerBottom = pos.y + 48;
     const spaceBelow = viewportHeight - triggerBottom;
     const spaceAbove = pos.y;
-    return spaceBelow >= menuHeight || spaceBelow >= spaceAbove ? "down" : "up";
+    if (spaceBelow < menuHeight && spaceAbove > spaceBelow) return "up";
+    return "down";
   }, [pos.y]);
 
   // Compute whether the "more" grid should appear on the left
