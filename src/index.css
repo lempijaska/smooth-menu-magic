@@ -38,9 +38,12 @@ All colors MUST be HSL.
 
     --radius: 1rem;
 
-    --menu-glass: 220 18% 10%;
-    --menu-glass-border: 220 15% 22%;
+    --menu-glass: 220 15% 12%;
+    --menu-glass-border: 220 12% 24%;
     --menu-glow: 175 70% 50%;
+    --menu-glass-hover: 220 15% 20%;
+    --menu-active-bg: 220 15% 26%;
+    --menu-separator: 220 12% 28%;
 
     --sidebar-background: 220 18% 10%;
     --sidebar-foreground: 210 20% 85%;

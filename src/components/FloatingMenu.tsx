@@ -6,7 +6,7 @@ import {
   FileText, Folder, Archive, Cloud, Lock, Unlock, Star, Sun, Moon,
   Coffee, Gift, Award, Target, Flag, Map, Compass, Wifi, Battery,
   Monitor, Smartphone, Tablet, Watch, Headphones, Mic, Volume2,
-  Download, Upload, Printer, Trash2, Edit, Eye,
+  Download, Upload, Printer, Trash2, Edit, Eye, X, GripVertical,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -68,29 +68,31 @@ const allItems: MenuItem[] = [
 
 const MAX_PINNED = 8;
 const DEFAULT_PINNED_IDS = ["home", "search", "bell", "heart", "mail", "user", "settings", "bookmark"];
-const TRIGGER_SIZE = 48;
-const PALETTE_WIDTH = 232;
-const FLOATING_GAP = 12;
+const TRIGGER_SIZE = 44;
+const PALETTE_COLS = 8;
+const PALETTE_ITEM_SIZE = 44;
+const PALETTE_GAP = 4;
+const PALETTE_PAD = 12;
 
 const FloatingMenu = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [activeItem, setActiveItem] = useState("home");
   const [pinnedIds, setPinnedIds] = useState<string[]>(DEFAULT_PINNED_IDS);
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   // Drag-and-drop state
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const [dropMode, setDropMode] = useState<"replace" | "insert">("insert");
-  const [dropOnMore, setDropOnMore] = useState(false);
+  const [dropOnPalette, setDropOnPalette] = useState(false);
 
-  // Menu direction (up or down)
-  const [openDirection, setOpenDirection] = useState<"down" | "up">("down");
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  // Palette direction
+  const [paletteAbove, setPaletteAbove] = useState(false);
 
   // Menu position drag state
   const [pos, setPos] = useState({ x: 24, y: 300 });
-  const dragRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const posStart = useRef({ x: 0, y: 0 });
@@ -101,17 +103,18 @@ const FloatingMenu = () => {
     [pinnedIds]
   );
 
-  const moreItems = useMemo(
+  const paletteItems = useMemo(
     () => allItems.filter((item) => !pinnedIds.includes(item.id)),
     [pinnedIds]
   );
 
-  const estimatedToolbarHeight = useMemo(
-    () => pinnedItems.length * 52 + 63,
+  // Estimate toolbar width for clamping
+  const toolbarWidth = useMemo(
+    () => TRIGGER_SIZE + 8 + pinnedItems.length * (TRIGGER_SIZE + 4) + 1 + (TRIGGER_SIZE + 4) + 16,
     [pinnedItems.length]
   );
 
-  // --- Menu position dragging ---
+  // --- Drag to reposition ---
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     isDragging.current = true;
     hasMoved.current = false;
@@ -125,61 +128,58 @@ const FloatingMenu = () => {
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved.current = true;
-    const newX = Math.max(0, Math.min(window.innerWidth - TRIGGER_SIZE, posStart.current.x + dx));
-    const newY = Math.max(0, Math.min(window.innerHeight - TRIGGER_SIZE, posStart.current.y + dy));
-    setPos({ x: newX, y: newY });
+    const maxX = window.innerWidth - TRIGGER_SIZE;
+    const maxY = window.innerHeight - TRIGGER_SIZE;
+    setPos({
+      x: Math.max(0, Math.min(maxX, posStart.current.x + dx)),
+      y: Math.max(0, Math.min(maxY, posStart.current.y + dy)),
+    });
   }, []);
 
-  const onPointerUp = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+  const onPointerUp = useCallback((e: React.PointerEvent) => {
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId);
     }
     isDragging.current = false;
   }, []);
 
-  // Close on canvas click
+  // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (dragRef.current && !dragRef.current.contains(e.target as Node)) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setMenuOpen(false);
-        setMoreOpen(false);
+        setPaletteOpen(false);
       }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Compute direction based on viewport
-  const computeDirection = useCallback(() => {
-    const spaceBelow = window.innerHeight - (pos.y + TRIGGER_SIZE);
-    return spaceBelow < estimatedToolbarHeight ? "up" : "down";
-  }, [estimatedToolbarHeight, pos.y]);
+  // Compute palette direction
+  const computePaletteDirection = useCallback(() => {
+    const paletteHeight = Math.ceil(paletteItems.length / PALETTE_COLS) * (PALETTE_ITEM_SIZE + PALETTE_GAP) + PALETTE_PAD * 2;
+    const spaceBelow = window.innerHeight - (pos.y + TRIGGER_SIZE + 8);
+    return spaceBelow < paletteHeight;
+  }, [paletteItems.length, pos.y]);
 
-  // Compute whether the "more" grid should appear on the left
-  const [moreOnLeft, setMoreOnLeft] = useState(false);
-  const computeMoreSide = useCallback(() => {
-    return pos.x + TRIGGER_SIZE + FLOATING_GAP + PALETTE_WIDTH > window.innerWidth;
-  }, [pos.x]);
-
-  // Update direction and more-side whenever position changes
   useEffect(() => {
-    setOpenDirection(computeDirection());
-    setMoreOnLeft(computeMoreSide());
-  }, [computeDirection, computeMoreSide]);
+    setPaletteAbove(computePaletteDirection());
+  }, [computePaletteDirection]);
 
   const handleTriggerClick = () => {
     if (hasMoved.current) return;
-    if (menuOpen) { setMenuOpen(false); setMoreOpen(false); }
-    else {
-      setOpenDirection(computeDirection());
-      setMoreOnLeft(computeMoreSide());
+    if (menuOpen) {
+      setMenuOpen(false);
+      setPaletteOpen(false);
+    } else {
+      setPaletteAbove(computePaletteDirection());
       setMenuOpen(true);
     }
   };
 
-  const handleMoreClick = () => {
+  const handlePaletteToggle = () => {
     if (hasMoved.current) return;
-    setMoreOpen((v) => !v);
+    setPaletteOpen((v) => !v);
   };
 
   const handleItemClick = (id: string) => {
@@ -187,7 +187,7 @@ const FloatingMenu = () => {
     setActiveItem(id);
   };
 
-  // --- Item drag-and-drop handlers ---
+  // --- Item DnD ---
   const onItemDragStart = (e: React.DragEvent, id: string) => {
     e.stopPropagation();
     setDraggedItemId(id);
@@ -199,25 +199,23 @@ const FloatingMenu = () => {
     setDraggedItemId(null);
     setDropTargetIndex(null);
     setDropMode("insert");
-    setDropOnMore(false);
+    setDropOnPalette(false);
   };
 
-  // Drag over a pinned item (replace mode)
   const onItemDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     e.stopPropagation();
     setDropTargetIndex(index);
     setDropMode("replace");
-    setDropOnMore(false);
+    setDropOnPalette(false);
   };
 
-  // Drag over the gap between pinned items (insert mode)
   const onGapDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     e.stopPropagation();
     setDropTargetIndex(index);
     setDropMode("insert");
-    setDropOnMore(false);
+    setDropOnPalette(false);
   };
 
   const onPinnedDrop = (e: React.DragEvent, index: number, mode: "replace" | "insert") => {
@@ -229,32 +227,26 @@ const FloatingMenu = () => {
       const wasPinned = prev.includes(draggedItemId);
       if (mode === "replace") {
         if (wasPinned) {
-          // Swap positions
           const dragIdx = prev.indexOf(draggedItemId);
           const newList = [...prev];
           newList[dragIdx] = prev[index];
           newList[index] = draggedItemId;
           return newList;
         } else {
-          // Replace the item at this index, displaced item goes back to "more"
           const newList = [...prev];
           newList[index] = draggedItemId;
           return newList;
         }
       } else {
-        // Insert/shift mode
         if (wasPinned) {
           const without = prev.filter((id) => id !== draggedItemId);
           const newList = [...without];
           newList.splice(index, 0, draggedItemId);
           return newList;
         } else {
-          // Insert from more, push last item out if at max
           const newList = [...prev];
           newList.splice(index, 0, draggedItemId);
-          if (newList.length > MAX_PINNED) {
-            return newList.slice(0, MAX_PINNED);
-          }
+          if (newList.length > MAX_PINNED) return newList.slice(0, MAX_PINNED);
           return newList;
         }
       }
@@ -262,41 +254,34 @@ const FloatingMenu = () => {
     onItemDragEnd();
   };
 
-  // Drop onto the "more" grid (remove from pinned)
-  const onMoreDragOver = (e: React.DragEvent) => {
+  const onPaletteDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setDropOnMore(true);
+    setDropOnPalette(true);
     setDropTargetIndex(null);
   };
 
-  const onMoreDrop = (e: React.DragEvent) => {
+  const onPaletteDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!draggedItemId) return;
-
     setPinnedIds((prev) => prev.filter((id) => id !== draggedItemId));
     onItemDragEnd();
   };
 
-  // Drop onto the vertical menu container itself (append)
-  const onMenuContainerDragOver = (e: React.DragEvent) => {
+  const onToolbarDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setDropTargetIndex(pinnedIds.length);
-    setDropOnMore(false);
+    setDropOnPalette(false);
   };
 
-  const onMenuContainerDrop = (e: React.DragEvent) => {
+  const onToolbarDrop = (e: React.DragEvent) => {
     e.preventDefault();
     if (!draggedItemId) return;
-
     setPinnedIds((prev) => {
       if (prev.includes(draggedItemId)) return prev;
       const newList = [...prev, draggedItemId];
-      if (newList.length > MAX_PINNED) {
-        newList.splice(MAX_PINNED - 1, 0, newList.pop()!);
-        return newList.slice(0, MAX_PINNED);
-      }
+      if (newList.length > MAX_PINNED) return newList.slice(0, MAX_PINNED);
       return newList;
     });
     onItemDragEnd();
@@ -306,174 +291,230 @@ const FloatingMenu = () => {
 
   return (
     <div
-      ref={dragRef}
+      ref={containerRef}
       className="fixed z-50 select-none"
       style={{ left: pos.x, top: pos.y }}
     >
+      {/* Trigger — drag handle */}
       <motion.button
-        className="relative z-20 flex h-12 w-12 items-center justify-center rounded-2xl border border-menu-glass-border bg-menu-glass/90 text-foreground backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.15)] cursor-grab active:cursor-grabbing"
-        ref={triggerRef}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        className="relative z-20 flex h-11 w-11 items-center justify-center rounded-[14px] border border-menu-glass-border bg-menu-glass/80 text-muted-foreground backdrop-blur-2xl shadow-lg shadow-black/20 cursor-grab active:cursor-grabbing transition-colors hover:text-foreground"
+        whileHover={{ scale: 1.06 }}
+        whileTap={{ scale: 0.94 }}
         onClick={handleTriggerClick}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
-        <Menu className="h-5 w-5" />
+        <AnimatePresence mode="wait">
+          {menuOpen ? (
+            <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
+              <X className="h-[18px] w-[18px]" />
+            </motion.div>
+          ) : (
+            <motion.div key="menu" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}>
+              <Menu className="h-[18px] w-[18px]" />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.button>
 
+      {/* Toolbar — horizontal pill */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            className={`absolute left-0 z-10 flex w-12 flex-col items-center gap-1 rounded-2xl border p-1 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] transition-colors ${
-              openDirection === "down" ? "top-full mt-2" : "bottom-full mb-2"
-            } ${
-              isDragActive && !dropOnMore
-                ? "border-primary/50 bg-menu-glass/95"
-                : "border-menu-glass-border bg-menu-glass/90"
+            className={`absolute left-0 top-full z-10 mt-2 flex items-center gap-0.5 rounded-2xl border border-menu-glass-border bg-menu-glass/80 px-1.5 py-1.5 backdrop-blur-2xl shadow-xl shadow-black/25 transition-colors ${
+              isDragActive && !dropOnPalette ? "border-primary/40" : ""
             }`}
-            initial={{ opacity: 0, scaleY: 0, originY: openDirection === "down" ? 0 : 1 }}
-            animate={{ opacity: 1, scaleY: 1 }}
-            exit={{ opacity: 0, scaleY: 0 }}
-            transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            onDragOver={onMenuContainerDragOver}
-            onDrop={onMenuContainerDrop}
+            initial={{ opacity: 0, y: -8, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.92 }}
+            transition={{ type: "spring", stiffness: 500, damping: 32 }}
+            onDragOver={onToolbarDragOver}
+            onDrop={onToolbarDrop}
           >
+            {/* Drag handle indicator */}
+            <div className="flex h-8 w-5 items-center justify-center text-muted-foreground/40">
+              <GripVertical className="h-3.5 w-3.5" />
+            </div>
+
+            <div className="mx-0.5 h-5 w-px bg-menu-separator/40" />
+
             {pinnedItems.map((item, i) => {
               const Icon = item.icon;
               const isActive = activeItem === item.id;
               const isBeingDragged = draggedItemId === item.id;
               const isInsertTarget = dropTargetIndex === i && dropMode === "insert" && isDragActive;
               const isReplaceTarget = dropTargetIndex === i && dropMode === "replace" && isDragActive;
+              const isHovered = hoveredItem === item.id;
 
               return (
-                <div key={item.id}>
+                <div key={item.id} className="flex items-center">
+                  {/* Insert gap */}
                   <div
-                    className="flex h-1.5 w-10 items-center justify-center"
+                    className="flex h-8 w-1.5 items-center justify-center"
                     onDragOver={(e) => onGapDragOver(e, i)}
                     onDrop={(e) => onPinnedDrop(e, i, "insert")}
                   >
                     {isInsertTarget && (
-                      <div className="h-1 w-6 rounded-full bg-primary animate-pulse" />
+                      <div className="h-5 w-0.5 rounded-full bg-primary animate-pulse" />
                     )}
                   </div>
+
+                  {/* Toolbar item */}
                   <motion.button
                     draggable
                     onDragStart={(e) => onItemDragStart(e as unknown as React.DragEvent, item.id)}
                     onDragEnd={onItemDragEnd}
                     onDragOver={(e) => onItemDragOver(e as unknown as React.DragEvent, i)}
                     onDrop={(e) => onPinnedDrop(e as unknown as React.DragEvent, i, "replace")}
-                    className={`group relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors cursor-grab active:cursor-grabbing ${
-                      isBeingDragged ? "opacity-30" : ""
+                    onMouseEnter={() => setHoveredItem(item.id)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    className={`group relative flex h-8 w-8 items-center justify-center rounded-[10px] transition-all duration-150 cursor-grab active:cursor-grabbing ${
+                      isBeingDragged ? "opacity-20" : ""
                     } ${
                       isReplaceTarget
-                        ? "ring-2 ring-primary bg-primary/20"
+                        ? "ring-2 ring-primary/60 bg-primary/15"
                         : isActive
-                          ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(var(--menu-glow)/0.35)]"
-                          : "text-muted-foreground hover:bg-secondary hover:text-primary"
+                          ? "bg-menu-active-bg text-foreground"
+                          : "text-muted-foreground hover:bg-menu-glass-hover hover:text-foreground"
                     }`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: isBeingDragged ? 0.3 : 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ delay: i * 0.03, type: "spring", stiffness: 500, damping: 28 }}
+                    animate={{ opacity: isBeingDragged ? 0.2 : 1, scale: isBeingDragged ? 0.8 : 1 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 28 }}
                     onClick={() => handleItemClick(item.id)}
                   >
-                    <Icon className="pointer-events-none h-4.5 w-4.5" />
-                    <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground opacity-0 transition-opacity group-hover:opacity-100">
-                      {item.label}
-                    </span>
+                    <Icon className="pointer-events-none h-[16px] w-[16px]" />
+
+                    {/* iPadOS-style tooltip */}
+                    <AnimatePresence>
+                      {isHovered && !isDragActive && (
+                        <motion.span
+                          className="pointer-events-none absolute -top-9 left-1/2 z-30 whitespace-nowrap rounded-lg border border-menu-glass-border bg-menu-glass px-2.5 py-1 text-[11px] font-medium text-foreground backdrop-blur-2xl shadow-lg shadow-black/20"
+                          initial={{ opacity: 0, y: 4, x: "-50%" }}
+                          animate={{ opacity: 1, y: 0, x: "-50%" }}
+                          exit={{ opacity: 0, y: 4, x: "-50%" }}
+                          transition={{ duration: 0.12 }}
+                        >
+                          {item.label}
+                          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-2 w-2 rotate-45 border-b border-r border-menu-glass-border bg-menu-glass" />
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
                   </motion.button>
                 </div>
               );
             })}
+
+            {/* Trailing insert gap */}
             {isDragActive && (
               <div
-                className="flex h-1.5 w-10 items-center justify-center"
+                className="flex h-8 w-1.5 items-center justify-center"
                 onDragOver={(e) => onGapDragOver(e, pinnedIds.length)}
                 onDrop={(e) => onPinnedDrop(e, pinnedIds.length, "insert")}
               >
                 {dropTargetIndex === pinnedIds.length && dropMode === "insert" && (
-                  <div className="h-1 w-6 rounded-full bg-primary animate-pulse" />
+                  <div className="h-5 w-0.5 rounded-full bg-primary animate-pulse" />
                 )}
               </div>
             )}
 
-            <div className="mx-auto h-px w-6 bg-border" />
+            <div className="mx-0.5 h-5 w-px bg-menu-separator/40" />
 
+            {/* More button */}
             <motion.button
-              className={`group relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
-                moreOpen
-                  ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(var(--menu-glow)/0.35)]"
-                  : "text-muted-foreground hover:bg-secondary hover:text-primary"
+              className={`relative flex h-8 w-8 items-center justify-center rounded-[10px] transition-all duration-150 ${
+                paletteOpen
+                  ? "bg-menu-active-bg text-foreground"
+                  : "text-muted-foreground hover:bg-menu-glass-hover hover:text-foreground"
               }`}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ delay: pinnedItems.length * 0.03, type: "spring", stiffness: 500, damping: 28 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleMoreClick}
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.92 }}
+              onClick={handlePaletteToggle}
             >
-              <MoreHorizontal className="h-4.5 w-4.5" />
-              <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground opacity-0 transition-opacity group-hover:opacity-100">
-                More
-              </span>
+              <MoreHorizontal className="h-[16px] w-[16px]" />
             </motion.button>
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* Palette — grid popover */}
       <AnimatePresence>
-        {moreOpen && menuOpen && (
+        {paletteOpen && menuOpen && (
           <motion.div
-            className={`absolute z-10 grid min-h-[200px] w-[232px] grid-cols-5 gap-1.5 rounded-2xl border p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] max-h-[70vh] overflow-y-auto overflow-x-hidden transition-colors ${
-              openDirection === "down" ? "top-14" : "bottom-14"
+            className={`absolute left-0 z-10 rounded-2xl border border-menu-glass-border bg-menu-glass/80 p-3 backdrop-blur-2xl shadow-xl shadow-black/25 max-h-[60vh] overflow-y-auto overflow-x-hidden transition-colors ${
+              paletteAbove ? "bottom-full mb-2" : ""
             } ${
-              moreOnLeft ? "right-full mr-3" : "left-full ml-3"
+              !paletteAbove ? "mt-2" : ""
             } ${
-              isDragActive && dropOnMore
-                ? "border-destructive/50 bg-menu-glass/95"
-                : "border-menu-glass-border bg-menu-glass/90"
+              isDragActive && dropOnPalette ? "border-destructive/40" : ""
             }`}
-            initial={{ opacity: 0, scale: 0.5, x: moreOnLeft ? 20 : -20 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.5, x: moreOnLeft ? 20 : -20 }}
-            transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            onDragOver={onMoreDragOver}
-            onDrop={onMoreDrop}
+            style={{
+              top: paletteAbove ? undefined : TRIGGER_SIZE + 8 + TRIGGER_SIZE + 8,
+              width: PALETTE_COLS * (PALETTE_ITEM_SIZE + PALETTE_GAP) + PALETTE_PAD * 2,
+            }}
+            initial={{ opacity: 0, y: paletteAbove ? 12 : -12, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: paletteAbove ? 12 : -12, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 450, damping: 28 }}
+            onDragOver={onPaletteDragOver}
+            onDrop={onPaletteDrop}
           >
-            {moreItems.length === 0 && (
-              <div className="col-span-5 py-4 text-center text-xs text-muted-foreground">
-                All items pinned
-              </div>
-            )}
-            {moreItems.map((item, i) => {
-              const Icon = item.icon;
-              const isBeingDragged = draggedItemId === item.id;
-              return (
-                <motion.button
-                  key={item.id}
-                  draggable
-                  onDragStart={(e) => onItemDragStart(e as unknown as React.DragEvent, item.id)}
-                  onDragEnd={onItemDragEnd}
-                  className={`group relative flex h-10 w-10 flex-col items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-primary cursor-grab active:cursor-grabbing ${
-                    isBeingDragged ? "opacity-30" : ""
-                  }`}
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: isBeingDragged ? 0.3 : 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0 }}
-                  transition={{ delay: i * 0.015, type: "spring", stiffness: 500, damping: 22 }}
-                  onClick={() => handleItemClick(item.id)}
-                >
-                  <Icon className="pointer-events-none h-4 w-4" />
-                  <span className="pointer-events-none absolute top-full z-10 mt-1 whitespace-nowrap rounded-lg bg-secondary px-2 py-1 text-[10px] font-medium text-secondary-foreground opacity-0 transition-opacity group-hover:opacity-100">
-                    {item.label}
-                  </span>
-                </motion.button>
-              );
-            })}
+            <div className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              All Actions
+            </div>
+            <div
+              className="grid gap-1"
+              style={{ gridTemplateColumns: `repeat(${PALETTE_COLS}, ${PALETTE_ITEM_SIZE}px)` }}
+            >
+              {paletteItems.length === 0 && (
+                <div className="col-span-8 py-6 text-center text-xs text-muted-foreground">
+                  All items pinned
+                </div>
+              )}
+              {paletteItems.map((item, i) => {
+                const Icon = item.icon;
+                const isBeingDragged = draggedItemId === item.id;
+                const isHovered = hoveredItem === item.id;
+                return (
+                  <motion.button
+                    key={item.id}
+                    draggable
+                    onDragStart={(e) => onItemDragStart(e as unknown as React.DragEvent, item.id)}
+                    onDragEnd={onItemDragEnd}
+                    onMouseEnter={() => setHoveredItem(item.id)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    className={`group relative flex h-11 w-11 flex-col items-center justify-center rounded-xl text-muted-foreground transition-all duration-150 hover:bg-menu-glass-hover hover:text-foreground cursor-grab active:cursor-grabbing ${
+                      isBeingDragged ? "opacity-20" : ""
+                    }`}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: isBeingDragged ? 0.2 : 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ delay: i * 0.008, type: "spring", stiffness: 500, damping: 25 }}
+                    onClick={() => handleItemClick(item.id)}
+                  >
+                    <Icon className="pointer-events-none h-[16px] w-[16px]" />
+                    <span className="pointer-events-none mt-0.5 text-[9px] font-medium leading-tight opacity-60 truncate max-w-[40px]">
+                      {item.label}
+                    </span>
+
+                    {/* Tooltip */}
+                    <AnimatePresence>
+                      {isHovered && !isDragActive && (
+                        <motion.span
+                          className="pointer-events-none absolute -top-8 left-1/2 z-30 whitespace-nowrap rounded-lg border border-menu-glass-border bg-menu-glass px-2.5 py-1 text-[11px] font-medium text-foreground backdrop-blur-2xl shadow-lg shadow-black/20"
+                          initial={{ opacity: 0, y: 4, x: "-50%" }}
+                          animate={{ opacity: 1, y: 0, x: "-50%" }}
+                          exit={{ opacity: 0, y: 4, x: "-50%" }}
+                          transition={{ duration: 0.12 }}
+                        >
+                          {item.label}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </motion.button>
+                );
+              })}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -49,6 +49,9 @@ export default {
         },
         "menu-glass": "hsl(var(--menu-glass))",
         "menu-glass-border": "hsl(var(--menu-glass-border))",
+        "menu-glass-hover": "hsl(var(--menu-glass-hover))",
+        "menu-active-bg": "hsl(var(--menu-active-bg))",
+        "menu-separator": "hsl(var(--menu-separator))",
         "menu-glow": "hsl(var(--menu-glow))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
