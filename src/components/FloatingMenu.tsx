@@ -327,8 +327,14 @@ const FloatingMenu = () => {
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            className={`absolute left-0 z-10 flex flex-col gap-1.5 rounded-2xl border p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] transition-colors ${
+            className={`absolute left-0 z-10 flex flex-col gap-1.5 p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] transition-colors border ${
               openDirection === "down" ? "top-full mt-2" : "bottom-full mb-2"
+            } ${
+              moreOpen
+                ? moreOnLeft
+                  ? "rounded-r-2xl rounded-l-none border-l-0"
+                  : "rounded-l-2xl rounded-r-none border-r-0"
+                : "rounded-2xl"
             } ${
               isDragActive && !dropOnMore
                 ? "border-primary/50 bg-menu-glass/95"
@@ -428,18 +434,20 @@ const FloatingMenu = () => {
       <AnimatePresence>
         {moreOpen && menuOpen && (
           <motion.div
-            className={`absolute z-10 grid min-h-[200px] w-[232px] grid-cols-5 gap-1.5 rounded-2xl border p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] max-h-[70vh] overflow-y-auto overflow-x-hidden transition-colors ${
+            className={`absolute z-10 grid min-h-[200px] w-[232px] grid-cols-5 gap-1.5 p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] max-h-[70vh] overflow-y-auto overflow-x-hidden transition-colors border ${
               openDirection === "down" ? "top-14" : "bottom-14"
             } ${
-              moreOnLeft ? "right-full mr-3" : "left-full ml-3"
+              moreOnLeft
+                ? "right-[calc(100%)] rounded-l-2xl rounded-r-none border-r-0"
+                : "left-[calc(100%)] rounded-r-2xl rounded-l-none border-l-0"
             } ${
               isDragActive && dropOnMore
                 ? "border-destructive/50 bg-menu-glass/95"
                 : "border-menu-glass-border bg-menu-glass/90"
             }`}
-            initial={{ opacity: 0, scale: 0.5, x: moreOnLeft ? 20 : -20 }}
+            initial={{ opacity: 0, scale: 0.95, x: moreOnLeft ? 10 : -10 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.5, x: moreOnLeft ? 20 : -20 }}
+            exit={{ opacity: 0, scale: 0.95, x: moreOnLeft ? 10 : -10 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
             onDragOver={onMoreDragOver}
             onDrop={onMoreDrop}
