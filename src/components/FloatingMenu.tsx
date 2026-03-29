@@ -327,162 +327,153 @@ const FloatingMenu = () => {
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            layout
-            className={`absolute left-0 z-10 flex border border-menu-glass-border bg-menu-glass/90 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] overflow-hidden ${
+            className={`absolute left-0 z-10 flex flex-col gap-1.5 rounded-2xl border p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] transition-colors ${
               openDirection === "down" ? "top-full mt-2" : "bottom-full mb-2"
-            } ${
-              moreOnLeft ? "flex-row-reverse" : "flex-row"
             } ${
               isDragActive && !dropOnMore
                 ? "border-primary/50 bg-menu-glass/95"
-                : ""
+                : "border-menu-glass-border bg-menu-glass/90"
             }`}
-            style={{ borderRadius: 16 }}
-            initial={{ opacity: 0, scale: 0.6, filter: "blur(8px)" }}
-            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-            exit={{ opacity: 0, scale: 0.6, filter: "blur(8px)" }}
-            transition={{ type: "spring", stiffness: 400, damping: 28 }}
+            initial={{ opacity: 0, scaleY: 0, originY: openDirection === "down" ? 0 : 1 }}
+            animate={{ opacity: 1, scaleY: 1 }}
+            exit={{ opacity: 0, scaleY: 0 }}
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
             onDragOver={onMenuContainerDragOver}
             onDrop={onMenuContainerDrop}
           >
-            {/* Toolbar column */}
-            <motion.div layout className="flex flex-col gap-1.5 p-2">
-              {pinnedItems.map((item, i) => {
-                const Icon = item.icon;
-                const isActive = activeItem === item.id;
-                const isBeingDragged = draggedItemId === item.id;
-                const isInsertTarget = dropTargetIndex === i && dropMode === "insert" && isDragActive;
-                const isReplaceTarget = dropTargetIndex === i && dropMode === "replace" && isDragActive;
+            {pinnedItems.map((item, i) => {
+              const Icon = item.icon;
+              const isActive = activeItem === item.id;
+              const isBeingDragged = draggedItemId === item.id;
+              const isInsertTarget = dropTargetIndex === i && dropMode === "insert" && isDragActive;
+              const isReplaceTarget = dropTargetIndex === i && dropMode === "replace" && isDragActive;
 
-                return (
-                  <div key={item.id}>
-                    <div
-                      className="flex h-1.5 w-10 items-center justify-center"
-                      onDragOver={(e) => onGapDragOver(e, i)}
-                      onDrop={(e) => onPinnedDrop(e, i, "insert")}
-                    >
-                      {isInsertTarget && (
-                        <div className="h-1 w-6 rounded-full bg-primary animate-pulse" />
-                      )}
-                    </div>
-                    <motion.button
-                      layout
-                      draggable
-                      onDragStart={(e) => onItemDragStart(e as unknown as React.DragEvent, item.id)}
-                      onDragEnd={onItemDragEnd}
-                      onDragOver={(e) => onItemDragOver(e as unknown as React.DragEvent, i)}
-                      onDrop={(e) => onPinnedDrop(e as unknown as React.DragEvent, i, "replace")}
-                      className={`group relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors cursor-grab active:cursor-grabbing ${
-                        isBeingDragged ? "opacity-30" : ""
-                      } ${
-                        isReplaceTarget
-                          ? "ring-2 ring-primary bg-primary/20"
-                          : isActive
-                            ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(var(--menu-glow)/0.35)]"
-                            : "text-muted-foreground hover:bg-secondary hover:text-primary"
-                      }`}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: isBeingDragged ? 0.3 : 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ delay: i * 0.03, type: "spring", stiffness: 500, damping: 28 }}
-                      onClick={() => handleItemClick(item.id)}
-                    >
-                      <Icon className="pointer-events-none h-4.5 w-4.5" />
-                      <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground opacity-0 transition-opacity group-hover:opacity-100">
-                        {item.label}
-                      </span>
-                    </motion.button>
+              return (
+                <div key={item.id}>
+                  <div
+                    className="flex h-1.5 w-10 items-center justify-center"
+                    onDragOver={(e) => onGapDragOver(e, i)}
+                    onDrop={(e) => onPinnedDrop(e, i, "insert")}
+                  >
+                    {isInsertTarget && (
+                      <div className="h-1 w-6 rounded-full bg-primary animate-pulse" />
+                    )}
                   </div>
-                );
-              })}
-              {isDragActive && (
-                <div
-                  className="flex h-1.5 w-10 items-center justify-center"
-                  onDragOver={(e) => onGapDragOver(e, pinnedIds.length)}
-                  onDrop={(e) => onPinnedDrop(e, pinnedIds.length, "insert")}
-                >
-                  {dropTargetIndex === pinnedIds.length && dropMode === "insert" && (
-                    <div className="h-1 w-6 rounded-full bg-primary animate-pulse" />
-                  )}
+                  <motion.button
+                    draggable
+                    onDragStart={(e) => onItemDragStart(e as unknown as React.DragEvent, item.id)}
+                    onDragEnd={onItemDragEnd}
+                    onDragOver={(e) => onItemDragOver(e as unknown as React.DragEvent, i)}
+                    onDrop={(e) => onPinnedDrop(e as unknown as React.DragEvent, i, "replace")}
+                    className={`group relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors cursor-grab active:cursor-grabbing ${
+                      isBeingDragged ? "opacity-30" : ""
+                    } ${
+                      isReplaceTarget
+                        ? "ring-2 ring-primary bg-primary/20"
+                        : isActive
+                          ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(var(--menu-glow)/0.35)]"
+                          : "text-muted-foreground hover:bg-secondary hover:text-primary"
+                    }`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: isBeingDragged ? 0.3 : 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ delay: i * 0.03, type: "spring", stiffness: 500, damping: 28 }}
+                    onClick={() => handleItemClick(item.id)}
+                  >
+                    <Icon className="pointer-events-none h-4.5 w-4.5" />
+                    <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground opacity-0 transition-opacity group-hover:opacity-100">
+                      {item.label}
+                    </span>
+                  </motion.button>
                 </div>
-              )}
-
-              <div className="mx-auto h-px w-6 bg-border" />
-
-              <motion.button
-                layout
-                className={`group relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
-                  moreOpen
-                    ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(var(--menu-glow)/0.35)]"
-                    : "text-muted-foreground hover:bg-secondary hover:text-primary"
-                }`}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ delay: pinnedItems.length * 0.03, type: "spring", stiffness: 500, damping: 28 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleMoreClick}
+              );
+            })}
+            {isDragActive && (
+              <div
+                className="flex h-1.5 w-10 items-center justify-center"
+                onDragOver={(e) => onGapDragOver(e, pinnedIds.length)}
+                onDrop={(e) => onPinnedDrop(e, pinnedIds.length, "insert")}
               >
-                <MoreHorizontal className="h-4.5 w-4.5" />
-                <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground opacity-0 transition-opacity group-hover:opacity-100">
-                  More
-                </span>
-              </motion.button>
-            </motion.div>
+                {dropTargetIndex === pinnedIds.length && dropMode === "insert" && (
+                  <div className="h-1 w-6 rounded-full bg-primary animate-pulse" />
+                )}
+              </div>
+            )}
 
-            {/* Palette – morphs out from the toolbar */}
-            <AnimatePresence>
-              {moreOpen && (
-                <motion.div
-                  layout
-                  className={`grid w-[232px] grid-cols-5 gap-1.5 p-2 max-h-[70vh] overflow-y-auto overflow-x-hidden self-start transition-colors ${
-                    moreOnLeft ? "border-r border-menu-glass-border" : "border-l border-menu-glass-border"
-                  } ${
-                    isDragActive && dropOnMore
-                      ? "bg-destructive/5"
-                      : ""
+            <div className="mx-auto h-px w-6 bg-border" />
+
+            <motion.button
+              className={`group relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
+                moreOpen
+                  ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(var(--menu-glow)/0.35)]"
+                  : "text-muted-foreground hover:bg-secondary hover:text-primary"
+              }`}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ delay: pinnedItems.length * 0.03, type: "spring", stiffness: 500, damping: 28 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleMoreClick}
+            >
+              <MoreHorizontal className="h-4.5 w-4.5" />
+              <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground opacity-0 transition-opacity group-hover:opacity-100">
+                More
+              </span>
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {moreOpen && menuOpen && (
+          <motion.div
+            className={`absolute z-10 grid min-h-[200px] w-[232px] grid-cols-5 gap-1.5 rounded-2xl border p-2 backdrop-blur-xl shadow-[0_0_30px_hsl(var(--menu-glow)/0.12)] max-h-[70vh] overflow-y-auto overflow-x-hidden transition-colors ${
+              openDirection === "down" ? "top-14" : "bottom-14"
+            } ${
+              moreOnLeft ? "right-full mr-3" : "left-full ml-3"
+            } ${
+              isDragActive && dropOnMore
+                ? "border-destructive/50 bg-menu-glass/95"
+                : "border-menu-glass-border bg-menu-glass/90"
+            }`}
+            initial={{ opacity: 0, scale: 0.5, x: moreOnLeft ? 20 : -20 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.5, x: moreOnLeft ? 20 : -20 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            onDragOver={onMoreDragOver}
+            onDrop={onMoreDrop}
+          >
+            {moreItems.length === 0 && (
+              <div className="col-span-5 py-4 text-center text-xs text-muted-foreground">
+                All items pinned
+              </div>
+            )}
+            {moreItems.map((item, i) => {
+              const Icon = item.icon;
+              const isBeingDragged = draggedItemId === item.id;
+              return (
+                <motion.button
+                  key={item.id}
+                  draggable
+                  onDragStart={(e) => onItemDragStart(e as unknown as React.DragEvent, item.id)}
+                  onDragEnd={onItemDragEnd}
+                  className={`group relative flex h-10 w-10 flex-col items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-primary cursor-grab active:cursor-grabbing ${
+                    isBeingDragged ? "opacity-30" : ""
                   }`}
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: 232, opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 28 }}
-                  onDragOver={onMoreDragOver}
-                  onDrop={onMoreDrop}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: isBeingDragged ? 0.3 : 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0 }}
+                  transition={{ delay: i * 0.015, type: "spring", stiffness: 500, damping: 22 }}
+                  onClick={() => handleItemClick(item.id)}
                 >
-                  {moreItems.length === 0 && (
-                    <div className="col-span-5 py-4 text-center text-xs text-muted-foreground">
-                      All items pinned
-                    </div>
-                  )}
-                  {moreItems.map((item, i) => {
-                    const Icon = item.icon;
-                    const isBeingDragged = draggedItemId === item.id;
-                    return (
-                      <motion.button
-                        key={item.id}
-                        draggable
-                        onDragStart={(e) => onItemDragStart(e as unknown as React.DragEvent, item.id)}
-                        onDragEnd={onItemDragEnd}
-                        className={`group relative flex h-10 w-10 flex-col items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-primary cursor-grab active:cursor-grabbing ${
-                          isBeingDragged ? "opacity-30" : ""
-                        }`}
-                        initial={{ opacity: 0, scale: 0 }}
-                        animate={{ opacity: isBeingDragged ? 0.3 : 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0 }}
-                        transition={{ delay: i * 0.015, type: "spring", stiffness: 500, damping: 22 }}
-                        onClick={() => handleItemClick(item.id)}
-                      >
-                        <Icon className="pointer-events-none h-4 w-4" />
-                        <span className="pointer-events-none absolute top-full z-10 mt-1 whitespace-nowrap rounded-lg bg-secondary px-2 py-1 text-[10px] font-medium text-secondary-foreground opacity-0 transition-opacity group-hover:opacity-100">
-                          {item.label}
-                        </span>
-                      </motion.button>
-                    );
-                  })}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  <Icon className="pointer-events-none h-4 w-4" />
+                  <span className="pointer-events-none absolute top-full z-10 mt-1 whitespace-nowrap rounded-lg bg-secondary px-2 py-1 text-[10px] font-medium text-secondary-foreground opacity-0 transition-opacity group-hover:opacity-100">
+                    {item.label}
+                  </span>
+                </motion.button>
+              );
+            })}
           </motion.div>
         )}
       </AnimatePresence>
