@@ -389,75 +389,111 @@ const FloatingMenu = () => {
               const isInsertTarget = dropTargetIndex === i && dropMode === "insert" && isDragActive;
               const isReplaceTarget = dropTargetIndex === i && dropMode === "replace" && isDragActive;
               const isHovered = hoveredItem === item.id;
+              // When dragging from toolbar to palette, shrink the dragged item's slot
+              const shouldCollapse = isBeingDragged && dropOnPalette;
 
               return (
-                <div key={item.id} className="flex items-center">
-                  {/* Insert gap */}
-                  <div
-                    className="flex h-8 w-1.5 items-center justify-center"
-                    onDragOver={(e) => onGapDragOver(e, i)}
-                    onDrop={(e) => onPinnedDrop(e, i, "insert")}
+                <motion.div
+                  key={item.id}
+                  className="flex items-center"
+                  layout
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                >
+                  {/* Animated insert gap */}
+                  <motion.div
+                    className="flex items-center justify-center overflow-hidden"
+                    style={{ height: 32 }}
+                    animate={{
+                      width: isInsertTarget ? ITEM_SLOT_SIZE : 6,
+                    }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    onDragOver={(e) => onGapDragOver(e as unknown as React.DragEvent, i)}
+                    onDrop={(e) => onPinnedDrop(e as unknown as React.DragEvent, i, "insert")}
                   >
-                    {isInsertTarget && (
-                      <div className="h-5 w-0.5 rounded-full bg-primary animate-pulse" />
-                    )}
-                  </div>
+                    <motion.div
+                      className="rounded-full bg-primary"
+                      animate={{
+                        width: isInsertTarget ? 3 : 0,
+                        height: isInsertTarget ? 20 : 0,
+                        opacity: isInsertTarget ? 1 : 0,
+                      }}
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    />
+                  </motion.div>
 
-                  {/* Toolbar item */}
-                  <motion.button
-                    draggable
-                    onDragStart={(e) => onItemDragStart(e as unknown as React.DragEvent, item.id)}
-                    onDragEnd={onItemDragEnd}
-                    onDragOver={(e) => onItemDragOver(e as unknown as React.DragEvent, i)}
-                    onDrop={(e) => onPinnedDrop(e as unknown as React.DragEvent, i, "replace")}
-                    onMouseEnter={() => setHoveredItem(item.id)}
-                    onMouseLeave={() => setHoveredItem(null)}
-                    className={`group relative flex h-8 w-8 items-center justify-center rounded-[10px] transition-all duration-150 cursor-grab active:cursor-grabbing ${
-                      isBeingDragged ? "opacity-20" : ""
-                    } ${
-                      isReplaceTarget
-                        ? "ring-2 ring-primary/60 bg-primary/15"
-                        : isActive
-                          ? "bg-menu-active-bg text-foreground"
-                          : "text-muted-foreground hover:bg-menu-glass-hover hover:text-foreground"
-                    }`}
-                    animate={{ opacity: isBeingDragged ? 0.2 : 1, scale: isBeingDragged ? 0.8 : 1 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 28 }}
-                    onClick={() => handleItemClick(item.id)}
+                  {/* Toolbar item with collapsible wrapper */}
+                  <motion.div
+                    animate={{
+                      width: shouldCollapse ? 0 : 32,
+                      opacity: shouldCollapse ? 0 : 1,
+                    }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    className="overflow-hidden"
                   >
-                    <Icon className="pointer-events-none h-[16px] w-[16px]" />
+                    <motion.button
+                      draggable
+                      onDragStart={(e) => onItemDragStart(e as unknown as React.DragEvent, item.id)}
+                      onDragEnd={onItemDragEnd}
+                      onDragOver={(e) => onItemDragOver(e as unknown as React.DragEvent, i)}
+                      onDrop={(e) => onPinnedDrop(e as unknown as React.DragEvent, i, "replace")}
+                      onMouseEnter={() => setHoveredItem(item.id)}
+                      onMouseLeave={() => setHoveredItem(null)}
+                      className={`group relative flex h-8 w-8 items-center justify-center rounded-[10px] transition-colors duration-150 cursor-grab active:cursor-grabbing ${
+                        isBeingDragged && !shouldCollapse ? "opacity-30" : ""
+                      } ${
+                        isReplaceTarget
+                          ? "ring-2 ring-primary/60 bg-primary/15"
+                          : isActive
+                            ? "bg-menu-active-bg text-foreground"
+                            : "text-muted-foreground hover:bg-menu-glass-hover hover:text-foreground"
+                      }`}
+                      onClick={() => handleItemClick(item.id)}
+                    >
+                      <Icon className="pointer-events-none h-[16px] w-[16px]" />
 
-                    {/* iPadOS-style tooltip */}
-                    <AnimatePresence>
-                      {isHovered && !isDragActive && (
-                        <motion.span
-                          className="pointer-events-none absolute -top-9 left-1/2 z-30 whitespace-nowrap rounded-lg border border-menu-glass-border bg-menu-glass px-2.5 py-1 text-[11px] font-medium text-foreground backdrop-blur-2xl shadow-lg shadow-black/20"
-                          initial={{ opacity: 0, y: 4, x: "-50%" }}
-                          animate={{ opacity: 1, y: 0, x: "-50%" }}
-                          exit={{ opacity: 0, y: 4, x: "-50%" }}
-                          transition={{ duration: 0.12 }}
-                        >
-                          {item.label}
-                          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-2 w-2 rotate-45 border-b border-r border-menu-glass-border bg-menu-glass" />
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
-                  </motion.button>
-                </div>
+                      {/* iPadOS-style tooltip */}
+                      <AnimatePresence>
+                        {isHovered && !isDragActive && (
+                          <motion.span
+                            className="pointer-events-none absolute -top-9 left-1/2 z-30 whitespace-nowrap rounded-lg border border-menu-glass-border bg-menu-glass px-2.5 py-1 text-[11px] font-medium text-foreground backdrop-blur-2xl shadow-lg shadow-black/20"
+                            initial={{ opacity: 0, y: 4, x: "-50%" }}
+                            animate={{ opacity: 1, y: 0, x: "-50%" }}
+                            exit={{ opacity: 0, y: 4, x: "-50%" }}
+                            transition={{ duration: 0.12 }}
+                          >
+                            {item.label}
+                            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-2 w-2 rotate-45 border-b border-r border-menu-glass-border bg-menu-glass" />
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </motion.button>
+                  </motion.div>
+                </motion.div>
               );
             })}
 
-            {/* Trailing insert gap */}
-            {isDragActive && (
-              <div
-                className="flex h-8 w-1.5 items-center justify-center"
-                onDragOver={(e) => onGapDragOver(e, pinnedIds.length)}
-                onDrop={(e) => onPinnedDrop(e, pinnedIds.length, "insert")}
+            {/* Trailing insert gap — animated */}
+            {isDragActive && isDragFromPalette && (
+              <motion.div
+                className="flex items-center justify-center overflow-hidden"
+                style={{ height: 32 }}
+                animate={{
+                  width: dropTargetIndex === pinnedIds.length && dropMode === "insert" ? ITEM_SLOT_SIZE : 6,
+                }}
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                onDragOver={(e) => onGapDragOver(e as unknown as React.DragEvent, pinnedIds.length)}
+                onDrop={(e) => onPinnedDrop(e as unknown as React.DragEvent, pinnedIds.length, "insert")}
               >
-                {dropTargetIndex === pinnedIds.length && dropMode === "insert" && (
-                  <div className="h-5 w-0.5 rounded-full bg-primary animate-pulse" />
-                )}
-              </div>
+                <motion.div
+                  className="rounded-full bg-primary"
+                  animate={{
+                    width: dropTargetIndex === pinnedIds.length && dropMode === "insert" ? 3 : 0,
+                    height: dropTargetIndex === pinnedIds.length && dropMode === "insert" ? 20 : 0,
+                    opacity: dropTargetIndex === pinnedIds.length && dropMode === "insert" ? 1 : 0,
+                  }}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                />
+              </motion.div>
             )}
 
             <div className="mx-0.5 h-5 w-px bg-menu-separator/40" />
