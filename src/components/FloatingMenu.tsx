@@ -289,7 +289,17 @@ const FloatingMenu = () => {
     e.preventDefault();
     e.stopPropagation();
     if (!draggedItemId) return;
-    setPinnedIds((prev) => prev.filter((id) => id !== draggedItemId));
+    // Remove from toolbar and backfill to maintain MAX_PINNED
+    setPinnedIds((prev) => {
+      if (!prev.includes(draggedItemId)) return prev;
+      const without = prev.filter((id) => id !== draggedItemId);
+      // Backfill from palette to keep 8 items
+      const currentPalette = allItems.filter((item) => !without.includes(item.id) && item.id !== draggedItemId);
+      while (without.length < MAX_PINNED && currentPalette.length > 0) {
+        without.push(currentPalette.shift()!.id);
+      }
+      return without;
+    });
     onItemDragEnd();
   };
 
@@ -310,6 +320,10 @@ const FloatingMenu = () => {
     });
     onItemDragEnd();
   };
+
+  // Determine if the dragged item is from toolbar (for push-back visual)
+  const isDragFromToolbar = draggedItemId !== null && pinnedIds.includes(draggedItemId);
+  const isDragFromPalette = draggedItemId !== null && !pinnedIds.includes(draggedItemId);
 
   const isDragActive = draggedItemId !== null;
 
