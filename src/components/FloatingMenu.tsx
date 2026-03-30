@@ -458,14 +458,11 @@ const FloatingMenu = () => {
         {paletteOpen && menuOpen && (
           <motion.div
             className={`absolute left-0 z-10 rounded-2xl border border-menu-glass-border bg-menu-glass/80 p-3 backdrop-blur-2xl shadow-xl shadow-black/25 max-h-[60vh] overflow-y-auto overflow-x-hidden transition-colors ${
-              paletteAbove ? "bottom-full mb-2" : ""
-            } ${
-              !paletteAbove ? "mt-2" : ""
-            } ${
               isDragActive && dropOnPalette ? "border-destructive/40" : ""
             }`}
             style={{
-              top: paletteAbove ? undefined : TRIGGER_SIZE + 8 + TRIGGER_SIZE + 8,
+              top: toolbarAbove ? undefined : TRIGGER_SIZE + 8 + TOOLBAR_HEIGHT + 8,
+              bottom: toolbarAbove ? TRIGGER_SIZE + 8 + TOOLBAR_HEIGHT + 8 : undefined,
               width: PALETTE_COLS * (PALETTE_ITEM_SIZE + PALETTE_GAP) + PALETTE_PAD * 2,
             }}
             initial={{ opacity: 0, y: paletteAbove ? 12 : -12, scale: 0.95 }}
