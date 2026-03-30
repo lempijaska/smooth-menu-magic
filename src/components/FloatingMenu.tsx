@@ -115,6 +115,8 @@ const FloatingMenu = () => {
     [pinnedItems.length]
   );
 
+  const TOOLBAR_HEIGHT = 44; // approximate toolbar outer height
+
   // --- Drag to reposition ---
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     isDragging.current = true;
