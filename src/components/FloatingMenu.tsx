@@ -158,16 +158,25 @@ const FloatingMenu = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Compute palette direction
-  const computePaletteDirection = useCallback(() => {
+  // Compute directions based on position
+  const computeDirections = useCallback(() => {
+    const spaceBelow = window.innerHeight - (pos.y + TRIGGER_SIZE);
+    const toolbarFitsBelow = spaceBelow > TOOLBAR_HEIGHT + 16;
+    const newToolbarAbove = !toolbarFitsBelow;
+
     const paletteHeight = Math.ceil(paletteItems.length / PALETTE_COLS) * (PALETTE_ITEM_SIZE + PALETTE_GAP) + PALETTE_PAD * 2;
-    const spaceBelow = window.innerHeight - (pos.y + TRIGGER_SIZE + 8);
-    return spaceBelow < paletteHeight;
+    // If toolbar is above, palette goes above toolbar; if below, palette goes below toolbar
+    const totalBelow = TOOLBAR_HEIGHT + 8 + paletteHeight + 16;
+    const newPaletteAbove = newToolbarAbove || spaceBelow < totalBelow;
+
+    return { toolbarAbove: newToolbarAbove, paletteAbove: newPaletteAbove };
   }, [paletteItems.length, pos.y]);
 
   useEffect(() => {
-    setPaletteAbove(computePaletteDirection());
-  }, [computePaletteDirection]);
+    const dirs = computeDirections();
+    setToolbarAbove(dirs.toolbarAbove);
+    setPaletteAbove(dirs.paletteAbove);
+  }, [computeDirections]);
 
   const handleTriggerClick = () => {
     if (hasMoved.current) return;
