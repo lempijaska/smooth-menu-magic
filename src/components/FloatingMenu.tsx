@@ -346,8 +346,10 @@ const FloatingMenu = () => {
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            className={`absolute left-0 z-10 flex items-center gap-0.5 rounded-2xl border border-menu-glass-border bg-menu-glass/80 px-1.5 py-1.5 backdrop-blur-2xl shadow-xl shadow-black/25 transition-colors ${
+            className={`absolute z-10 flex items-center gap-0.5 rounded-2xl border border-menu-glass-border bg-menu-glass/80 px-1.5 py-1.5 backdrop-blur-2xl shadow-xl shadow-black/25 transition-colors ${
               toolbarAbove ? "bottom-full mb-2" : "top-full mt-2"
+            } ${
+              openLeft ? "right-0" : "left-0"
             } ${
               isDragActive && !dropOnPalette ? "border-primary/40" : ""
             }`}
