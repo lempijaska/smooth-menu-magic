@@ -87,8 +87,9 @@ const FloatingMenu = () => {
   const [dropMode, setDropMode] = useState<"replace" | "insert">("insert");
   const [dropOnPalette, setDropOnPalette] = useState(false);
 
-  // Palette direction
+  // Direction states
   const [paletteAbove, setPaletteAbove] = useState(false);
+  const [toolbarAbove, setToolbarAbove] = useState(false);
 
   // Menu position drag state
   const [pos, setPos] = useState({ x: 24, y: 300 });
@@ -113,6 +114,8 @@ const FloatingMenu = () => {
     () => TRIGGER_SIZE + 8 + pinnedItems.length * (TRIGGER_SIZE + 4) + 1 + (TRIGGER_SIZE + 4) + 16,
     [pinnedItems.length]
   );
+
+  const TOOLBAR_HEIGHT = 44; // approximate toolbar outer height
 
   // --- Drag to reposition ---
   const onPointerDown = useCallback((e: React.PointerEvent) => {
@@ -155,16 +158,25 @@ const FloatingMenu = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Compute palette direction
-  const computePaletteDirection = useCallback(() => {
+  // Compute directions based on position
+  const computeDirections = useCallback(() => {
+    const spaceBelow = window.innerHeight - (pos.y + TRIGGER_SIZE);
+    const toolbarFitsBelow = spaceBelow > TOOLBAR_HEIGHT + 16;
+    const newToolbarAbove = !toolbarFitsBelow;
+
     const paletteHeight = Math.ceil(paletteItems.length / PALETTE_COLS) * (PALETTE_ITEM_SIZE + PALETTE_GAP) + PALETTE_PAD * 2;
-    const spaceBelow = window.innerHeight - (pos.y + TRIGGER_SIZE + 8);
-    return spaceBelow < paletteHeight;
+    // If toolbar is above, palette goes above toolbar; if below, palette goes below toolbar
+    const totalBelow = TOOLBAR_HEIGHT + 8 + paletteHeight + 16;
+    const newPaletteAbove = newToolbarAbove || spaceBelow < totalBelow;
+
+    return { toolbarAbove: newToolbarAbove, paletteAbove: newPaletteAbove };
   }, [paletteItems.length, pos.y]);
 
   useEffect(() => {
-    setPaletteAbove(computePaletteDirection());
-  }, [computePaletteDirection]);
+    const dirs = computeDirections();
+    setToolbarAbove(dirs.toolbarAbove);
+    setPaletteAbove(dirs.paletteAbove);
+  }, [computeDirections]);
 
   const handleTriggerClick = () => {
     if (hasMoved.current) return;
@@ -172,7 +184,9 @@ const FloatingMenu = () => {
       setMenuOpen(false);
       setPaletteOpen(false);
     } else {
-      setPaletteAbove(computePaletteDirection());
+      const dirs = computeDirections();
+      setToolbarAbove(dirs.toolbarAbove);
+      setPaletteAbove(dirs.paletteAbove);
       setMenuOpen(true);
     }
   };
@@ -323,12 +337,14 @@ const FloatingMenu = () => {
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            className={`absolute left-0 top-full z-10 mt-2 flex items-center gap-0.5 rounded-2xl border border-menu-glass-border bg-menu-glass/80 px-1.5 py-1.5 backdrop-blur-2xl shadow-xl shadow-black/25 transition-colors ${
+            className={`absolute left-0 z-10 flex items-center gap-0.5 rounded-2xl border border-menu-glass-border bg-menu-glass/80 px-1.5 py-1.5 backdrop-blur-2xl shadow-xl shadow-black/25 transition-colors ${
+              toolbarAbove ? "bottom-full mb-2" : "top-full mt-2"
+            } ${
               isDragActive && !dropOnPalette ? "border-primary/40" : ""
             }`}
-            initial={{ opacity: 0, y: -8, scale: 0.92 }}
+            initial={{ opacity: 0, y: toolbarAbove ? 8 : -8, scale: 0.92 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.92 }}
+            exit={{ opacity: 0, y: toolbarAbove ? 8 : -8, scale: 0.92 }}
             transition={{ type: "spring", stiffness: 500, damping: 32 }}
             onDragOver={onToolbarDragOver}
             onDrop={onToolbarDrop}
@@ -442,19 +458,16 @@ const FloatingMenu = () => {
         {paletteOpen && menuOpen && (
           <motion.div
             className={`absolute left-0 z-10 rounded-2xl border border-menu-glass-border bg-menu-glass/80 p-3 backdrop-blur-2xl shadow-xl shadow-black/25 max-h-[60vh] overflow-y-auto overflow-x-hidden transition-colors ${
-              paletteAbove ? "bottom-full mb-2" : ""
-            } ${
-              !paletteAbove ? "mt-2" : ""
-            } ${
               isDragActive && dropOnPalette ? "border-destructive/40" : ""
             }`}
             style={{
-              top: paletteAbove ? undefined : TRIGGER_SIZE + 8 + TRIGGER_SIZE + 8,
+              top: toolbarAbove ? undefined : TRIGGER_SIZE + 8 + TOOLBAR_HEIGHT + 8,
+              bottom: toolbarAbove ? TRIGGER_SIZE + 8 + TOOLBAR_HEIGHT + 8 : undefined,
               width: PALETTE_COLS * (PALETTE_ITEM_SIZE + PALETTE_GAP) + PALETTE_PAD * 2,
             }}
-            initial={{ opacity: 0, y: paletteAbove ? 12 : -12, scale: 0.95 }}
+            initial={{ opacity: 0, y: toolbarAbove ? 12 : -12, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: paletteAbove ? 12 : -12, scale: 0.95 }}
+            exit={{ opacity: 0, y: toolbarAbove ? 12 : -12, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 450, damping: 28 }}
             onDragOver={onPaletteDragOver}
             onDrop={onPaletteDrop}
