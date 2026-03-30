@@ -90,6 +90,7 @@ const FloatingMenu = () => {
   // Direction states
   const [paletteAbove, setPaletteAbove] = useState(false);
   const [toolbarAbove, setToolbarAbove] = useState(false);
+  const [openLeft, setOpenLeft] = useState(false);
 
   // Menu position drag state
   const [pos, setPos] = useState({ x: 24, y: 300 });
