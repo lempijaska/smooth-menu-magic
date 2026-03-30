@@ -337,12 +337,14 @@ const FloatingMenu = () => {
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            className={`absolute left-0 top-full z-10 mt-2 flex items-center gap-0.5 rounded-2xl border border-menu-glass-border bg-menu-glass/80 px-1.5 py-1.5 backdrop-blur-2xl shadow-xl shadow-black/25 transition-colors ${
+            className={`absolute left-0 z-10 flex items-center gap-0.5 rounded-2xl border border-menu-glass-border bg-menu-glass/80 px-1.5 py-1.5 backdrop-blur-2xl shadow-xl shadow-black/25 transition-colors ${
+              toolbarAbove ? "bottom-full mb-2" : "top-full mt-2"
+            } ${
               isDragActive && !dropOnPalette ? "border-primary/40" : ""
             }`}
-            initial={{ opacity: 0, y: -8, scale: 0.92 }}
+            initial={{ opacity: 0, y: toolbarAbove ? 8 : -8, scale: 0.92 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.92 }}
+            exit={{ opacity: 0, y: toolbarAbove ? 8 : -8, scale: 0.92 }}
             transition={{ type: "spring", stiffness: 500, damping: 32 }}
             onDragOver={onToolbarDragOver}
             onDrop={onToolbarDrop}
