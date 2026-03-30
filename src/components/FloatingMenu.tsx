@@ -90,6 +90,7 @@ const FloatingMenu = () => {
   // Direction states
   const [paletteAbove, setPaletteAbove] = useState(false);
   const [toolbarAbove, setToolbarAbove] = useState(false);
+  const [openLeft, setOpenLeft] = useState(false);
 
   // Menu position drag state
   const [pos, setPos] = useState({ x: 24, y: 300 });
@@ -159,23 +160,30 @@ const FloatingMenu = () => {
   }, []);
 
   // Compute directions based on position
+  const paletteWidth = PALETTE_COLS * (PALETTE_ITEM_SIZE + PALETTE_GAP) + PALETTE_PAD * 2;
+
   const computeDirections = useCallback(() => {
     const spaceBelow = window.innerHeight - (pos.y + TRIGGER_SIZE);
     const toolbarFitsBelow = spaceBelow > TOOLBAR_HEIGHT + 16;
     const newToolbarAbove = !toolbarFitsBelow;
 
     const paletteHeight = Math.ceil(paletteItems.length / PALETTE_COLS) * (PALETTE_ITEM_SIZE + PALETTE_GAP) + PALETTE_PAD * 2;
-    // If toolbar is above, palette goes above toolbar; if below, palette goes below toolbar
     const totalBelow = TOOLBAR_HEIGHT + 8 + paletteHeight + 16;
     const newPaletteAbove = newToolbarAbove || spaceBelow < totalBelow;
 
-    return { toolbarAbove: newToolbarAbove, paletteAbove: newPaletteAbove };
-  }, [paletteItems.length, pos.y]);
+    // Horizontal: check if toolbar fits to the right
+    const spaceRight = window.innerWidth - pos.x;
+    const maxWidth = Math.max(toolbarWidth, paletteWidth);
+    const newOpenLeft = spaceRight < maxWidth + 16;
+
+    return { toolbarAbove: newToolbarAbove, paletteAbove: newPaletteAbove, openLeft: newOpenLeft };
+  }, [paletteItems.length, pos.y, pos.x, toolbarWidth, paletteWidth]);
 
   useEffect(() => {
     const dirs = computeDirections();
     setToolbarAbove(dirs.toolbarAbove);
     setPaletteAbove(dirs.paletteAbove);
+    setOpenLeft(dirs.openLeft);
   }, [computeDirections]);
 
   const handleTriggerClick = () => {
@@ -187,6 +195,7 @@ const FloatingMenu = () => {
       const dirs = computeDirections();
       setToolbarAbove(dirs.toolbarAbove);
       setPaletteAbove(dirs.paletteAbove);
+      setOpenLeft(dirs.openLeft);
       setMenuOpen(true);
     }
   };
@@ -337,8 +346,10 @@ const FloatingMenu = () => {
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            className={`absolute left-0 z-10 flex items-center gap-0.5 rounded-2xl border border-menu-glass-border bg-menu-glass/80 px-1.5 py-1.5 backdrop-blur-2xl shadow-xl shadow-black/25 transition-colors ${
+            className={`absolute z-10 flex items-center gap-0.5 rounded-2xl border border-menu-glass-border bg-menu-glass/80 px-1.5 py-1.5 backdrop-blur-2xl shadow-xl shadow-black/25 transition-colors ${
               toolbarAbove ? "bottom-full mb-2" : "top-full mt-2"
+            } ${
+              openLeft ? "right-0" : "left-0"
             } ${
               isDragActive && !dropOnPalette ? "border-primary/40" : ""
             }`}
@@ -457,13 +468,15 @@ const FloatingMenu = () => {
       <AnimatePresence>
         {paletteOpen && menuOpen && (
           <motion.div
-            className={`absolute left-0 z-10 rounded-2xl border border-menu-glass-border bg-menu-glass/80 p-3 backdrop-blur-2xl shadow-xl shadow-black/25 max-h-[60vh] overflow-y-auto overflow-x-hidden transition-colors ${
+            className={`absolute z-10 rounded-2xl border border-menu-glass-border bg-menu-glass/80 p-3 backdrop-blur-2xl shadow-xl shadow-black/25 max-h-[60vh] overflow-y-auto overflow-x-hidden transition-colors ${
+              openLeft ? "right-0" : "left-0"
+            } ${
               isDragActive && dropOnPalette ? "border-destructive/40" : ""
             }`}
             style={{
               top: toolbarAbove ? undefined : TRIGGER_SIZE + 8 + TOOLBAR_HEIGHT + 8,
               bottom: toolbarAbove ? TRIGGER_SIZE + 8 + TOOLBAR_HEIGHT + 8 : undefined,
-              width: PALETTE_COLS * (PALETTE_ITEM_SIZE + PALETTE_GAP) + PALETTE_PAD * 2,
+              width: paletteWidth,
             }}
             initial={{ opacity: 0, y: toolbarAbove ? 12 : -12, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
