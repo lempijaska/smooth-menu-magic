@@ -160,18 +160,24 @@ const FloatingMenu = () => {
   }, []);
 
   // Compute directions based on position
+  const paletteWidth = PALETTE_COLS * (PALETTE_ITEM_SIZE + PALETTE_GAP) + PALETTE_PAD * 2;
+
   const computeDirections = useCallback(() => {
     const spaceBelow = window.innerHeight - (pos.y + TRIGGER_SIZE);
     const toolbarFitsBelow = spaceBelow > TOOLBAR_HEIGHT + 16;
     const newToolbarAbove = !toolbarFitsBelow;
 
     const paletteHeight = Math.ceil(paletteItems.length / PALETTE_COLS) * (PALETTE_ITEM_SIZE + PALETTE_GAP) + PALETTE_PAD * 2;
-    // If toolbar is above, palette goes above toolbar; if below, palette goes below toolbar
     const totalBelow = TOOLBAR_HEIGHT + 8 + paletteHeight + 16;
     const newPaletteAbove = newToolbarAbove || spaceBelow < totalBelow;
 
-    return { toolbarAbove: newToolbarAbove, paletteAbove: newPaletteAbove };
-  }, [paletteItems.length, pos.y]);
+    // Horizontal: check if toolbar fits to the right
+    const spaceRight = window.innerWidth - pos.x;
+    const maxWidth = Math.max(toolbarWidth, paletteWidth);
+    const newOpenLeft = spaceRight < maxWidth + 16;
+
+    return { toolbarAbove: newToolbarAbove, paletteAbove: newPaletteAbove, openLeft: newOpenLeft };
+  }, [paletteItems.length, pos.y, pos.x, toolbarWidth, paletteWidth]);
 
   useEffect(() => {
     const dirs = computeDirections();
