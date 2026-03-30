@@ -67,6 +67,7 @@ const allItems: MenuItem[] = [
 ];
 
 const MAX_PINNED = 8;
+const ITEM_SLOT_SIZE = 36; // width of a toolbar item + gap for animation
 const DEFAULT_PINNED_IDS = ["home", "search", "bell", "heart", "mail", "user", "settings", "bookmark"];
 const TRIGGER_SIZE = 44;
 const PALETTE_COLS = 8;
