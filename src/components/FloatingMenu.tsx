@@ -87,8 +87,9 @@ const FloatingMenu = () => {
   const [dropMode, setDropMode] = useState<"replace" | "insert">("insert");
   const [dropOnPalette, setDropOnPalette] = useState(false);
 
-  // Palette direction
+  // Direction states
   const [paletteAbove, setPaletteAbove] = useState(false);
+  const [toolbarAbove, setToolbarAbove] = useState(false);
 
   // Menu position drag state
   const [pos, setPos] = useState({ x: 24, y: 300 });
