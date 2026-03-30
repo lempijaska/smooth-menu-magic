@@ -195,6 +195,7 @@ const FloatingMenu = () => {
       const dirs = computeDirections();
       setToolbarAbove(dirs.toolbarAbove);
       setPaletteAbove(dirs.paletteAbove);
+      setOpenLeft(dirs.openLeft);
       setMenuOpen(true);
     }
   };
