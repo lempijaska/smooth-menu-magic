@@ -465,9 +465,9 @@ const FloatingMenu = () => {
               bottom: toolbarAbove ? TRIGGER_SIZE + 8 + TOOLBAR_HEIGHT + 8 : undefined,
               width: PALETTE_COLS * (PALETTE_ITEM_SIZE + PALETTE_GAP) + PALETTE_PAD * 2,
             }}
-            initial={{ opacity: 0, y: paletteAbove ? 12 : -12, scale: 0.95 }}
+            initial={{ opacity: 0, y: toolbarAbove ? 12 : -12, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: paletteAbove ? 12 : -12, scale: 0.95 }}
+            exit={{ opacity: 0, y: toolbarAbove ? 12 : -12, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 450, damping: 28 }}
             onDragOver={onPaletteDragOver}
             onDrop={onPaletteDrop}
