@@ -396,7 +396,7 @@ const FloatingMenu = () => {
                 <motion.div
                   key={item.id}
                   className="flex items-center"
-                  layout
+                  layout="size"
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
                 >
                   {/* Animated insert gap */}
