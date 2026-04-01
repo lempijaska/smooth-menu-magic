@@ -291,21 +291,65 @@ const FloatingMenu = () => {
     setDropTargetIndex(null);
   };
 
+  const onPaletteItemDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setPaletteDropIndex(index);
+    setPaletteDropMode("replace");
+    setDropOnPalette(true);
+    setDropTargetIndex(null);
+  };
+
+  const onPaletteGapDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setPaletteDropIndex(index);
+    setPaletteDropMode("insert");
+    setDropOnPalette(true);
+    setDropTargetIndex(null);
+  };
+
   const onPaletteDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!draggedItemId) return;
-    // Remove from toolbar and backfill to maintain MAX_PINNED
-    setPinnedIds((prev) => {
-      if (!prev.includes(draggedItemId)) return prev;
-      const without = prev.filter((id) => id !== draggedItemId);
-      // Backfill from palette to keep 8 items
-      const currentPalette = allItems.filter((item) => !without.includes(item.id) && item.id !== draggedItemId);
-      while (without.length < MAX_PINNED && currentPalette.length > 0) {
-        without.push(currentPalette.shift()!.id);
+
+    if (paletteDropIndex !== null && paletteDropMode === "replace") {
+      // Replace: swap the dragged toolbar item with the target palette item
+      const targetPaletteItem = paletteItems[paletteDropIndex];
+      if (targetPaletteItem && pinnedIds.includes(draggedItemId)) {
+        setPinnedIds((prev) => {
+          const newList = [...prev];
+          const dragIdx = newList.indexOf(draggedItemId);
+          newList[dragIdx] = targetPaletteItem.id;
+          return newList;
+        });
       }
-      return without;
-    });
+    } else if (paletteDropIndex !== null && paletteDropMode === "insert") {
+      // Insert: remove from toolbar and backfill
+      if (pinnedIds.includes(draggedItemId)) {
+        setPinnedIds((prev) => {
+          const without = prev.filter((id) => id !== draggedItemId);
+          const currentPalette = allItems.filter((item) => !without.includes(item.id) && item.id !== draggedItemId);
+          while (without.length < MAX_PINNED && currentPalette.length > 0) {
+            without.push(currentPalette.shift()!.id);
+          }
+          return without;
+        });
+      }
+    } else {
+      // Generic palette drop (no specific index)
+      if (pinnedIds.includes(draggedItemId)) {
+        setPinnedIds((prev) => {
+          const without = prev.filter((id) => id !== draggedItemId);
+          const currentPalette = allItems.filter((item) => !without.includes(item.id) && item.id !== draggedItemId);
+          while (without.length < MAX_PINNED && currentPalette.length > 0) {
+            without.push(currentPalette.shift()!.id);
+          }
+          return without;
+        });
+      }
+    }
     onItemDragEnd();
   };
 
