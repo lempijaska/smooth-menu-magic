@@ -228,6 +228,8 @@ const FloatingMenu = () => {
     setDropTargetIndex(null);
     setDropMode("insert");
     setDropOnPalette(false);
+    setPaletteDropIndex(null);
+    setPaletteDropMode("insert");
   };
 
   const onItemDragOver = (e: React.DragEvent, index: number) => {
