@@ -591,7 +591,7 @@ const FloatingMenu = () => {
             </div>
             <div
               className="flex flex-wrap"
-              style={{ gap: PALETTE_GAP, width: PALETTE_COLS * (PALETTE_ITEM_SIZE + PALETTE_GAP) - PALETTE_GAP }}
+              style={{ width: PALETTE_COLS * (PALETTE_ITEM_SIZE + PALETTE_GAP) - PALETTE_GAP + (isDragActive && isDragFromToolbar ? PALETTE_COLS * 6 : 0) }}
             >
               {paletteItems.length === 0 && (
                 <div className="w-full py-6 text-center text-xs text-muted-foreground">
