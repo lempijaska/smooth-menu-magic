@@ -88,6 +88,10 @@ const FloatingMenu = () => {
   const [dropMode, setDropMode] = useState<"replace" | "insert">("insert");
   const [dropOnPalette, setDropOnPalette] = useState(false);
 
+  // Palette-level DnD state
+  const [paletteDropIndex, setPaletteDropIndex] = useState<number | null>(null);
+  const [paletteDropMode, setPaletteDropMode] = useState<"replace" | "insert">("insert");
+
   // Direction states
   const [paletteAbove, setPaletteAbove] = useState(false);
   const [toolbarAbove, setToolbarAbove] = useState(false);
