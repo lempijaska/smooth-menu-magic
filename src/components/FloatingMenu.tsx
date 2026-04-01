@@ -605,13 +605,13 @@ const FloatingMenu = () => {
                 const isInsertTarget = paletteDropIndex === i && paletteDropMode === "insert" && isDragActive && isDragFromToolbar;
                 const isReplaceTarget = paletteDropIndex === i && paletteDropMode === "replace" && isDragActive && isDragFromToolbar;
                 return (
-                  <div key={item.id} className="flex items-start">
+                  <div key={item.id} className="flex items-start" style={{ marginBottom: PALETTE_GAP, marginRight: PALETTE_GAP }}>
                     {/* Animated insert gap */}
                     <motion.div
-                      className="flex items-center justify-center overflow-hidden"
+                      className="flex items-center justify-center overflow-hidden shrink-0"
                       style={{ height: PALETTE_ITEM_SIZE }}
                       animate={{
-                        width: isInsertTarget ? PALETTE_ITEM_SIZE : 0,
+                        width: isInsertTarget ? PALETTE_ITEM_SIZE : (isDragActive && isDragFromToolbar ? 6 : 0),
                         marginRight: isInsertTarget ? PALETTE_GAP : 0,
                       }}
                       transition={{ type: "spring", stiffness: 500, damping: 30 }}
