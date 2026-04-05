@@ -294,8 +294,16 @@ const FloatingMenu = () => {
   const onPaletteItemDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     e.stopPropagation();
-    setPaletteDropIndex(index);
-    setPaletteDropMode("replace");
+    // Detect left edge → insert, otherwise replace
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    if (offsetX < PALETTE_ITEM_SIZE * 0.3) {
+      setPaletteDropIndex(index);
+      setPaletteDropMode("insert");
+    } else {
+      setPaletteDropIndex(index);
+      setPaletteDropMode("replace");
+    }
     setDropOnPalette(true);
     setDropTargetIndex(null);
   };
@@ -590,46 +598,62 @@ const FloatingMenu = () => {
               All Actions
             </div>
             <div
-              className="flex flex-wrap"
-              style={{ width: PALETTE_COLS * (PALETTE_ITEM_SIZE + PALETTE_GAP) - PALETTE_GAP + (isDragActive && isDragFromToolbar ? PALETTE_COLS * 6 : 0) }}
+              className="grid"
+              style={{
+                gridTemplateColumns: `repeat(${PALETTE_COLS}, ${PALETTE_ITEM_SIZE}px)`,
+                gap: PALETTE_GAP,
+              }}
             >
               {paletteItems.length === 0 && (
-                <div className="w-full py-6 text-center text-xs text-muted-foreground">
+                <div className="col-span-full py-6 text-center text-xs text-muted-foreground">
                   All items pinned
                 </div>
               )}
-              {paletteItems.map((item, i) => {
-                const Icon = item.icon;
-                const isBeingDragged = draggedItemId === item.id;
-                const isHovered = hoveredItem === item.id;
-                const isInsertTarget = paletteDropIndex === i && paletteDropMode === "insert" && isDragActive && isDragFromToolbar;
-                const isReplaceTarget = paletteDropIndex === i && paletteDropMode === "replace" && isDragActive && isDragFromToolbar;
-                return (
-                  <div key={item.id} className="flex items-start" style={{ marginBottom: PALETTE_GAP, marginRight: PALETTE_GAP }}>
-                    {/* Animated insert gap */}
-                    <motion.div
-                      className="flex items-center justify-center overflow-hidden shrink-0"
-                      style={{ height: PALETTE_ITEM_SIZE }}
-                      animate={{
-                        width: isInsertTarget ? PALETTE_ITEM_SIZE : (isDragActive && isDragFromToolbar ? 6 : 0),
-                        marginRight: isInsertTarget ? PALETTE_GAP : 0,
-                      }}
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                      onDragOver={(e) => onPaletteGapDragOver(e as unknown as React.DragEvent, i)}
-                      onDrop={(e) => { e.preventDefault(); e.stopPropagation(); onPaletteDrop(e as unknown as React.DragEvent); }}
-                    >
-                      <motion.div
-                        className="rounded-full bg-primary"
-                        animate={{
-                          width: isInsertTarget ? 3 : 0,
-                          height: isInsertTarget ? 24 : 0,
-                          opacity: isInsertTarget ? 1 : 0,
-                        }}
-                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                      />
-                    </motion.div>
+              {(() => {
+                // Build the render list: items with an optional insertion placeholder
+                const insertIdx = paletteDropIndex !== null && paletteDropMode === "insert" && isDragActive && isDragFromToolbar ? paletteDropIndex : -1;
+                const renderItems: Array<{ type: "item"; item: MenuItem; origIndex: number } | { type: "placeholder"; index: number }> = [];
 
+                paletteItems.forEach((item, i) => {
+                  if (insertIdx === i) {
+                    renderItems.push({ type: "placeholder", index: i });
+                  }
+                  renderItems.push({ type: "item", item, origIndex: i });
+                });
+                // Handle insert at end
+                if (insertIdx === paletteItems.length) {
+                  renderItems.push({ type: "placeholder", index: paletteItems.length });
+                }
+
+                return renderItems.map((entry) => {
+                  if (entry.type === "placeholder") {
+                    return (
+                      <motion.div
+                        key="insert-placeholder"
+                        className="flex items-center justify-center rounded-xl border-2 border-dashed border-primary/50 bg-primary/10"
+                        style={{ width: PALETTE_ITEM_SIZE, height: PALETTE_ITEM_SIZE }}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        onDragOver={(e) => onPaletteGapDragOver(e as unknown as React.DragEvent, entry.index)}
+                        onDrop={(e) => { e.preventDefault(); e.stopPropagation(); onPaletteDrop(e as unknown as React.DragEvent); }}
+                      >
+                        <div className="w-0.5 h-6 rounded-full bg-primary" />
+                      </motion.div>
+                    );
+                  }
+
+                  const { item, origIndex: i } = entry;
+                  const Icon = item.icon;
+                  const isBeingDragged = draggedItemId === item.id;
+                  const isHovered = hoveredItem === item.id;
+                  const isReplaceTarget = paletteDropIndex === i && paletteDropMode === "replace" && isDragActive && isDragFromToolbar;
+
+                  return (
                     <motion.button
+                      key={item.id}
+                      layout
                       draggable
                       onDragStart={(e) => onItemDragStart(e as unknown as React.DragEvent, item.id)}
                       onDragEnd={onItemDragEnd}
@@ -637,15 +661,16 @@ const FloatingMenu = () => {
                       onDrop={(e) => { e.preventDefault(); e.stopPropagation(); onPaletteDrop(e as unknown as React.DragEvent); }}
                       onMouseEnter={() => setHoveredItem(item.id)}
                       onMouseLeave={() => setHoveredItem(null)}
-                      className={`group relative flex h-11 w-11 flex-col items-center justify-center rounded-xl text-muted-foreground transition-all duration-150 hover:bg-menu-glass-hover hover:text-foreground cursor-grab active:cursor-grabbing ${
+                      className={`group relative flex flex-col items-center justify-center rounded-xl text-muted-foreground transition-colors duration-150 hover:bg-menu-glass-hover hover:text-foreground cursor-grab active:cursor-grabbing ${
                         isBeingDragged ? "opacity-20" : ""
                       } ${
                         isReplaceTarget ? "ring-2 ring-primary/60 bg-primary/15" : ""
                       }`}
+                      style={{ width: PALETTE_ITEM_SIZE, height: PALETTE_ITEM_SIZE }}
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: isBeingDragged ? 0.2 : 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ delay: i * 0.008, type: "spring", stiffness: 500, damping: 25 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 25 }}
                       onClick={() => handleItemClick(item.id)}
                     >
                       <Icon className="pointer-events-none h-[16px] w-[16px]" />
@@ -668,9 +693,9 @@ const FloatingMenu = () => {
                         )}
                       </AnimatePresence>
                     </motion.button>
-                  </div>
-                );
-              })}
+                  );
+                });
+              })()}
             </div>
           </motion.div>
         )}
