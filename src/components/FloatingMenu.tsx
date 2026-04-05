@@ -338,54 +338,40 @@ const FloatingMenu = () => {
     if (!draggedItemId) return;
 
     const dropIdx = paletteDropIndex ?? paletteOrder.length;
+    const fromToolbar = pinnedIds.includes(draggedItemId);
+
+    if (!fromToolbar) { onItemDragEnd(); return; }
 
     if (paletteDropIndex !== null && paletteDropMode === "replace") {
-      // Replace: swap the dragged toolbar item with the target palette item
+      // Replace: swap toolbar item with palette item
       const targetPaletteItemId = paletteOrder[paletteDropIndex];
-      if (targetPaletteItemId && pinnedIds.includes(draggedItemId)) {
-        setPinnedIds((prev) => {
-          const newList = [...prev];
-          const dragIdx = newList.indexOf(draggedItemId);
-          newList[dragIdx] = targetPaletteItemId;
-          return newList;
-        });
-        setPaletteOrder((prev) => {
-          const newOrder = [...prev];
-          newOrder[paletteDropIndex] = draggedItemId;
-          return newOrder.filter((id) => !pinnedIds.includes(id) || id === draggedItemId);
-        });
+      if (targetPaletteItemId) {
+        const newPinned = [...pinnedIds];
+        const dragIdx = newPinned.indexOf(draggedItemId);
+        newPinned[dragIdx] = targetPaletteItemId;
+
+        const newPalette = [...paletteOrder];
+        newPalette[paletteDropIndex] = draggedItemId;
+
+        setPinnedIds(newPinned);
+        setPaletteOrder(newPalette.filter((id) => !newPinned.includes(id)));
       }
     } else {
-      // Insert: remove from toolbar, insert at specific palette position, backfill toolbar
-      if (pinnedIds.includes(draggedItemId)) {
-        // Insert into palette at the drop position
-        setPaletteOrder((prev) => {
-          const newOrder = [...prev];
-          newOrder.splice(dropIdx, 0, draggedItemId);
-          return newOrder;
-        });
-        // Remove from toolbar and backfill
-        setPinnedIds((prev) => {
-          const without = prev.filter((id) => id !== draggedItemId);
-          // Backfill from palette order (first available item not already pinned)
-          const updatedPaletteOrder = paletteOrder.filter((id) => id !== draggedItemId);
-          const backfillPool = updatedPaletteOrder.filter((id) => !without.includes(id));
-          while (without.length < MAX_PINNED && backfillPool.length > 0) {
-            const backfillId = backfillPool.shift()!;
-            without.push(backfillId);
-          }
-          // Remove backfilled items from palette order
-          setPaletteOrder((prevPalette) => {
-            const finalPinned = without;
-            let result = [...prevPalette];
-            if (!result.includes(draggedItemId)) {
-              result.splice(dropIdx, 0, draggedItemId);
-            }
-            return result.filter((id) => !finalPinned.includes(id));
-          });
-          return without;
-        });
+      // Insert: remove from toolbar, place at specific palette position, backfill
+      const newPinned = pinnedIds.filter((id) => id !== draggedItemId);
+      const newPalette = [...paletteOrder];
+      newPalette.splice(dropIdx, 0, draggedItemId);
+
+      // Backfill toolbar from palette
+      while (newPinned.length < MAX_PINNED && newPalette.length > 0) {
+        // Find first palette item not already pinned
+        const idx = newPalette.findIndex((id) => !newPinned.includes(id) && id !== draggedItemId);
+        if (idx === -1) break;
+        newPinned.push(newPalette.splice(idx, 1)[0]);
       }
+
+      setPinnedIds(newPinned);
+      setPaletteOrder(newPalette.filter((id) => !newPinned.includes(id)));
     }
     onItemDragEnd();
   };
