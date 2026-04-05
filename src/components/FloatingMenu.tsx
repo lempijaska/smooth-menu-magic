@@ -652,7 +652,6 @@ const FloatingMenu = () => {
                   return (
                     <motion.button
                       key={item.id}
-                      layout
                       draggable
                       onDragStart={(e) => onItemDragStart(e as unknown as React.DragEvent, item.id)}
                       onDragEnd={onItemDragEnd}
