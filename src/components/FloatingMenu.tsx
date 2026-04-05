@@ -399,13 +399,16 @@ const FloatingMenu = () => {
   const onToolbarDrop = (e: React.DragEvent) => {
     e.preventDefault();
     if (!draggedItemId) return;
-    setPinnedIds((prev) => {
-      if (prev.includes(draggedItemId)) return prev;
-      const newList = [...prev, draggedItemId];
-      if (newList.length > MAX_PINNED) return newList.slice(0, MAX_PINNED);
-      return newList;
-    });
+    if (pinnedIds.includes(draggedItemId)) { onItemDragEnd(); return; }
+    const newList = [...pinnedIds, draggedItemId];
+    setPaletteOrder((po) => po.filter((id) => id !== draggedItemId));
+    if (newList.length > MAX_PINNED) {
+      const overflow = newList.pop()!;
+      setPaletteOrder((po) => [...po, overflow]);
+    }
+    setPinnedIds(newList);
     onItemDragEnd();
+  };
   };
 
   // Determine if the dragged item is from toolbar (for push-back visual)
