@@ -80,6 +80,9 @@ const FloatingMenu = () => {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [activeItem, setActiveItem] = useState("home");
   const [pinnedIds, setPinnedIds] = useState<string[]>(DEFAULT_PINNED_IDS);
+  const [paletteOrder, setPaletteOrder] = useState<string[]>(
+    allItems.filter((item) => !DEFAULT_PINNED_IDS.includes(item.id)).map((item) => item.id)
+  );
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   // Drag-and-drop state
@@ -111,8 +114,8 @@ const FloatingMenu = () => {
   );
 
   const paletteItems = useMemo(
-    () => allItems.filter((item) => !pinnedIds.includes(item.id)),
-    [pinnedIds]
+    () => paletteOrder.map((id) => allItems.find((item) => item.id === id)!).filter(Boolean),
+    [paletteOrder]
   );
 
   // Estimate toolbar width for clamping
@@ -253,8 +256,9 @@ const FloatingMenu = () => {
     e.stopPropagation();
     if (!draggedItemId) return;
 
+    const wasPinned = pinnedIds.includes(draggedItemId);
+
     setPinnedIds((prev) => {
-      const wasPinned = prev.includes(draggedItemId);
       if (mode === "replace") {
         if (wasPinned) {
           const dragIdx = prev.indexOf(draggedItemId);
@@ -263,8 +267,14 @@ const FloatingMenu = () => {
           newList[index] = draggedItemId;
           return newList;
         } else {
+          const displacedId = prev[index];
           const newList = [...prev];
           newList[index] = draggedItemId;
+          // Add displaced item to palette, remove dragged from palette
+          setPaletteOrder((po) => {
+            const without = po.filter((id) => id !== draggedItemId);
+            return [...without, displacedId];
+          });
           return newList;
         }
       } else {
@@ -276,7 +286,12 @@ const FloatingMenu = () => {
         } else {
           const newList = [...prev];
           newList.splice(index, 0, draggedItemId);
-          if (newList.length > MAX_PINNED) return newList.slice(0, MAX_PINNED);
+          // Remove from palette
+          setPaletteOrder((po) => po.filter((id) => id !== draggedItemId));
+          if (newList.length > MAX_PINNED) {
+            const overflow = newList.pop()!;
+            setPaletteOrder((po) => [...po, overflow]);
+          }
           return newList;
         }
       }
@@ -322,41 +337,41 @@ const FloatingMenu = () => {
     e.stopPropagation();
     if (!draggedItemId) return;
 
+    const dropIdx = paletteDropIndex ?? paletteOrder.length;
+    const fromToolbar = pinnedIds.includes(draggedItemId);
+
+    if (!fromToolbar) { onItemDragEnd(); return; }
+
     if (paletteDropIndex !== null && paletteDropMode === "replace") {
-      // Replace: swap the dragged toolbar item with the target palette item
-      const targetPaletteItem = paletteItems[paletteDropIndex];
-      if (targetPaletteItem && pinnedIds.includes(draggedItemId)) {
-        setPinnedIds((prev) => {
-          const newList = [...prev];
-          const dragIdx = newList.indexOf(draggedItemId);
-          newList[dragIdx] = targetPaletteItem.id;
-          return newList;
-        });
-      }
-    } else if (paletteDropIndex !== null && paletteDropMode === "insert") {
-      // Insert: remove from toolbar and backfill
-      if (pinnedIds.includes(draggedItemId)) {
-        setPinnedIds((prev) => {
-          const without = prev.filter((id) => id !== draggedItemId);
-          const currentPalette = allItems.filter((item) => !without.includes(item.id) && item.id !== draggedItemId);
-          while (without.length < MAX_PINNED && currentPalette.length > 0) {
-            without.push(currentPalette.shift()!.id);
-          }
-          return without;
-        });
+      // Replace: swap toolbar item with palette item
+      const targetPaletteItemId = paletteOrder[paletteDropIndex];
+      if (targetPaletteItemId) {
+        const newPinned = [...pinnedIds];
+        const dragIdx = newPinned.indexOf(draggedItemId);
+        newPinned[dragIdx] = targetPaletteItemId;
+
+        const newPalette = [...paletteOrder];
+        newPalette[paletteDropIndex] = draggedItemId;
+
+        setPinnedIds(newPinned);
+        setPaletteOrder(newPalette.filter((id) => !newPinned.includes(id)));
       }
     } else {
-      // Generic palette drop (no specific index)
-      if (pinnedIds.includes(draggedItemId)) {
-        setPinnedIds((prev) => {
-          const without = prev.filter((id) => id !== draggedItemId);
-          const currentPalette = allItems.filter((item) => !without.includes(item.id) && item.id !== draggedItemId);
-          while (without.length < MAX_PINNED && currentPalette.length > 0) {
-            without.push(currentPalette.shift()!.id);
-          }
-          return without;
-        });
+      // Insert: remove from toolbar, place at specific palette position, backfill
+      const newPinned = pinnedIds.filter((id) => id !== draggedItemId);
+      const newPalette = [...paletteOrder];
+      newPalette.splice(dropIdx, 0, draggedItemId);
+
+      // Backfill toolbar from palette
+      while (newPinned.length < MAX_PINNED && newPalette.length > 0) {
+        // Find first palette item not already pinned
+        const idx = newPalette.findIndex((id) => !newPinned.includes(id) && id !== draggedItemId);
+        if (idx === -1) break;
+        newPinned.push(newPalette.splice(idx, 1)[0]);
       }
+
+      setPinnedIds(newPinned);
+      setPaletteOrder(newPalette.filter((id) => !newPinned.includes(id)));
     }
     onItemDragEnd();
   };
@@ -370,12 +385,14 @@ const FloatingMenu = () => {
   const onToolbarDrop = (e: React.DragEvent) => {
     e.preventDefault();
     if (!draggedItemId) return;
-    setPinnedIds((prev) => {
-      if (prev.includes(draggedItemId)) return prev;
-      const newList = [...prev, draggedItemId];
-      if (newList.length > MAX_PINNED) return newList.slice(0, MAX_PINNED);
-      return newList;
-    });
+    if (pinnedIds.includes(draggedItemId)) { onItemDragEnd(); return; }
+    const newList = [...pinnedIds, draggedItemId];
+    setPaletteOrder((po) => po.filter((id) => id !== draggedItemId));
+    if (newList.length > MAX_PINNED) {
+      const overflow = newList.pop()!;
+      setPaletteOrder((po) => [...po, overflow]);
+    }
+    setPinnedIds(newList);
     onItemDragEnd();
   };
 
