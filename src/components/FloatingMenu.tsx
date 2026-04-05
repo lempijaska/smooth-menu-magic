@@ -660,12 +660,11 @@ const FloatingMenu = () => {
                       onDrop={(e) => { e.preventDefault(); e.stopPropagation(); onPaletteDrop(e as unknown as React.DragEvent); }}
                       onMouseEnter={() => setHoveredItem(item.id)}
                       onMouseLeave={() => setHoveredItem(null)}
-                      className={`group relative flex flex-col items-center justify-center rounded-xl text-muted-foreground transition-colors duration-150 hover:bg-menu-glass-hover hover:text-foreground cursor-grab active:cursor-grabbing ${
+                      className={`group relative flex flex-col items-center justify-center rounded-xl text-muted-foreground transition-colors duration-150 hover:bg-menu-glass-hover hover:text-foreground cursor-grab active:cursor-grabbing aspect-square ${
                         isBeingDragged ? "opacity-20" : ""
                       } ${
                         isReplaceTarget ? "ring-2 ring-primary/60 bg-primary/15" : ""
                       }`}
-                      style={{ width: PALETTE_ITEM_SIZE, height: PALETTE_ITEM_SIZE }}
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: isBeingDragged ? 0.2 : 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
