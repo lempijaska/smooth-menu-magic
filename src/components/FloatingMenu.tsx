@@ -256,8 +256,9 @@ const FloatingMenu = () => {
     e.stopPropagation();
     if (!draggedItemId) return;
 
+    const wasPinned = pinnedIds.includes(draggedItemId);
+
     setPinnedIds((prev) => {
-      const wasPinned = prev.includes(draggedItemId);
       if (mode === "replace") {
         if (wasPinned) {
           const dragIdx = prev.indexOf(draggedItemId);
@@ -266,8 +267,14 @@ const FloatingMenu = () => {
           newList[index] = draggedItemId;
           return newList;
         } else {
+          const displacedId = prev[index];
           const newList = [...prev];
           newList[index] = draggedItemId;
+          // Add displaced item to palette, remove dragged from palette
+          setPaletteOrder((po) => {
+            const without = po.filter((id) => id !== draggedItemId);
+            return [...without, displacedId];
+          });
           return newList;
         }
       } else {
@@ -279,7 +286,12 @@ const FloatingMenu = () => {
         } else {
           const newList = [...prev];
           newList.splice(index, 0, draggedItemId);
-          if (newList.length > MAX_PINNED) return newList.slice(0, MAX_PINNED);
+          // Remove from palette
+          setPaletteOrder((po) => po.filter((id) => id !== draggedItemId));
+          if (newList.length > MAX_PINNED) {
+            const overflow = newList.pop()!;
+            setPaletteOrder((po) => [...po, overflow]);
+          }
           return newList;
         }
       }
