@@ -630,8 +630,7 @@ const FloatingMenu = () => {
                     return (
                       <motion.div
                         key="insert-placeholder"
-                        className="flex items-center justify-center rounded-xl border-2 border-dashed border-primary/50 bg-primary/10"
-                        style={{ width: PALETTE_ITEM_SIZE, height: PALETTE_ITEM_SIZE }}
+                        className="flex items-center justify-center rounded-xl border-2 border-dashed border-primary/50 bg-primary/10 aspect-square"
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.8 }}
