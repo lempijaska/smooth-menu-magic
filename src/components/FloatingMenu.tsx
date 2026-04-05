@@ -409,7 +409,6 @@ const FloatingMenu = () => {
     setPinnedIds(newList);
     onItemDragEnd();
   };
-  };
 
   // Determine if the dragged item is from toolbar (for push-back visual)
   const isDragFromToolbar = draggedItemId !== null && pinnedIds.includes(draggedItemId);
