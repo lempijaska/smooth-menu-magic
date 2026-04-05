@@ -600,7 +600,7 @@ const FloatingMenu = () => {
             <div
               className="grid"
               style={{
-                gridTemplateColumns: `repeat(${PALETTE_COLS}, ${PALETTE_ITEM_SIZE}px)`,
+                gridTemplateColumns: `repeat(${PALETTE_COLS}, 1fr)`,
                 gap: PALETTE_GAP,
               }}
             >
