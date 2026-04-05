@@ -294,8 +294,16 @@ const FloatingMenu = () => {
   const onPaletteItemDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     e.stopPropagation();
-    setPaletteDropIndex(index);
-    setPaletteDropMode("replace");
+    // Detect left edge → insert, otherwise replace
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    if (offsetX < PALETTE_ITEM_SIZE * 0.3) {
+      setPaletteDropIndex(index);
+      setPaletteDropMode("insert");
+    } else {
+      setPaletteDropIndex(index);
+      setPaletteDropMode("replace");
+    }
     setDropOnPalette(true);
     setDropTargetIndex(null);
   };
