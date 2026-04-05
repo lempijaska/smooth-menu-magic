@@ -80,6 +80,9 @@ const FloatingMenu = () => {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [activeItem, setActiveItem] = useState("home");
   const [pinnedIds, setPinnedIds] = useState<string[]>(DEFAULT_PINNED_IDS);
+  const [paletteOrder, setPaletteOrder] = useState<string[]>(
+    allItems.filter((item) => !DEFAULT_PINNED_IDS.includes(item.id)).map((item) => item.id)
+  );
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   // Drag-and-drop state
@@ -111,8 +114,8 @@ const FloatingMenu = () => {
   );
 
   const paletteItems = useMemo(
-    () => allItems.filter((item) => !pinnedIds.includes(item.id)),
-    [pinnedIds]
+    () => paletteOrder.map((id) => allItems.find((item) => item.id === id)!).filter(Boolean),
+    [paletteOrder]
   );
 
   // Estimate toolbar width for clamping
