@@ -325,38 +325,52 @@ const FloatingMenu = () => {
     e.stopPropagation();
     if (!draggedItemId) return;
 
+    const dropIdx = paletteDropIndex ?? paletteOrder.length;
+
     if (paletteDropIndex !== null && paletteDropMode === "replace") {
       // Replace: swap the dragged toolbar item with the target palette item
-      const targetPaletteItem = paletteItems[paletteDropIndex];
-      if (targetPaletteItem && pinnedIds.includes(draggedItemId)) {
+      const targetPaletteItemId = paletteOrder[paletteDropIndex];
+      if (targetPaletteItemId && pinnedIds.includes(draggedItemId)) {
         setPinnedIds((prev) => {
           const newList = [...prev];
           const dragIdx = newList.indexOf(draggedItemId);
-          newList[dragIdx] = targetPaletteItem.id;
+          newList[dragIdx] = targetPaletteItemId;
           return newList;
         });
-      }
-    } else if (paletteDropIndex !== null && paletteDropMode === "insert") {
-      // Insert: remove from toolbar and backfill
-      if (pinnedIds.includes(draggedItemId)) {
-        setPinnedIds((prev) => {
-          const without = prev.filter((id) => id !== draggedItemId);
-          const currentPalette = allItems.filter((item) => !without.includes(item.id) && item.id !== draggedItemId);
-          while (without.length < MAX_PINNED && currentPalette.length > 0) {
-            without.push(currentPalette.shift()!.id);
-          }
-          return without;
+        setPaletteOrder((prev) => {
+          const newOrder = [...prev];
+          newOrder[paletteDropIndex] = draggedItemId;
+          return newOrder.filter((id) => !pinnedIds.includes(id) || id === draggedItemId);
         });
       }
     } else {
-      // Generic palette drop (no specific index)
+      // Insert: remove from toolbar, insert at specific palette position, backfill toolbar
       if (pinnedIds.includes(draggedItemId)) {
+        // Insert into palette at the drop position
+        setPaletteOrder((prev) => {
+          const newOrder = [...prev];
+          newOrder.splice(dropIdx, 0, draggedItemId);
+          return newOrder;
+        });
+        // Remove from toolbar and backfill
         setPinnedIds((prev) => {
           const without = prev.filter((id) => id !== draggedItemId);
-          const currentPalette = allItems.filter((item) => !without.includes(item.id) && item.id !== draggedItemId);
-          while (without.length < MAX_PINNED && currentPalette.length > 0) {
-            without.push(currentPalette.shift()!.id);
+          // Backfill from palette order (first available item not already pinned)
+          const updatedPaletteOrder = paletteOrder.filter((id) => id !== draggedItemId);
+          const backfillPool = updatedPaletteOrder.filter((id) => !without.includes(id));
+          while (without.length < MAX_PINNED && backfillPool.length > 0) {
+            const backfillId = backfillPool.shift()!;
+            without.push(backfillId);
           }
+          // Remove backfilled items from palette order
+          setPaletteOrder((prevPalette) => {
+            const finalPinned = without;
+            let result = [...prevPalette];
+            if (!result.includes(draggedItemId)) {
+              result.splice(dropIdx, 0, draggedItemId);
+            }
+            return result.filter((id) => !finalPinned.includes(id));
+          });
           return without;
         });
       }
