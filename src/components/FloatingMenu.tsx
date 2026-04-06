@@ -71,7 +71,6 @@ const ITEM_SLOT_SIZE = 36; // width of a toolbar item + gap for animation
 const DEFAULT_PINNED_IDS = ["home", "search", "bell", "heart", "mail", "user", "settings", "bookmark"];
 const TRIGGER_SIZE = 44;
 const PALETTE_COLS = 8;
-const PALETTE_ITEM_SIZE = 44;
 const PALETTE_GAP = 4;
 const PALETTE_PAD = 12;
 
@@ -118,11 +117,23 @@ const FloatingMenu = () => {
     [paletteOrder]
   );
 
-  // Estimate toolbar width for clamping
-  const toolbarWidth = useMemo(
-    () => TRIGGER_SIZE + 8 + pinnedItems.length * (TRIGGER_SIZE + 4) + 1 + (TRIGGER_SIZE + 4) + 16,
-    [pinnedItems.length]
+  // Estimate toolbar width: left grip(20+4sep+4) + items + trailing gap area + sep + more btn + sep + right grip
+  const toolbarWidth = useMemo(() => {
+    const leftHandle = 20 + 4 + 4; // grip + mx + separator
+    const items = pinnedItems.length * (32 + 6); // item width + gap (insert gap 6)
+    const rightSection = 4 + 32 + 4 + 4 + 20; // sep + more + mx + sep + grip
+    const padding = 12; // px-1.5 * 2
+    return leftHandle + items + rightSection + padding;
+  }, [pinnedItems.length]);
+
+  // Palette matches toolbar width; compute item size from that
+  const paletteWidth = toolbarWidth;
+  const PALETTE_ITEM_SIZE = useMemo(
+    () => Math.floor((paletteWidth - PALETTE_PAD * 2 - (PALETTE_COLS - 1) * PALETTE_GAP) / PALETTE_COLS),
+    [paletteWidth]
   );
+  const paletteIconSize = Math.max(12, Math.round(PALETTE_ITEM_SIZE * 0.38));
+  const paletteFontSize = Math.max(7, Math.round(PALETTE_ITEM_SIZE * 0.22));
 
   const TOOLBAR_HEIGHT = 44; // approximate toolbar outer height
 
@@ -173,7 +184,7 @@ const FloatingMenu = () => {
   }, []);
 
   // Compute directions based on position
-  const paletteWidth = PALETTE_COLS * (PALETTE_ITEM_SIZE + PALETTE_GAP) + PALETTE_PAD * 2;
+  
 
   const computeDirections = useCallback(() => {
     const spaceBelow = window.innerHeight - (pos.y + TRIGGER_SIZE);
@@ -597,6 +608,19 @@ const FloatingMenu = () => {
             >
               <MoreHorizontal className="h-[16px] w-[16px]" />
             </motion.button>
+
+            <div className="mx-0.5 h-5 w-px bg-menu-separator/40" />
+
+            {/* Right drag handle — repositions the whole menu */}
+            <div
+              className="flex h-8 w-5 items-center justify-center text-muted-foreground/40 cursor-grab active:cursor-grabbing"
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={onPointerUp}
+            >
+              <GripVertical className="h-3.5 w-3.5" />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -698,8 +722,8 @@ const FloatingMenu = () => {
                       transition={{ type: "spring", stiffness: 500, damping: 25 }}
                       onClick={() => handleItemClick(item.id)}
                     >
-                      <Icon className="pointer-events-none h-[16px] w-[16px]" />
-                      <span className="pointer-events-none mt-0.5 text-[9px] font-medium leading-tight opacity-60 truncate max-w-[40px]">
+                      <Icon className="pointer-events-none" style={{ width: paletteIconSize, height: paletteIconSize }} />
+                      <span className="pointer-events-none mt-0.5 font-medium leading-tight opacity-60 truncate" style={{ fontSize: paletteFontSize, maxWidth: PALETTE_ITEM_SIZE - 4 }}>
                         {item.label}
                       </span>
 
