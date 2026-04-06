@@ -153,6 +153,11 @@ const FloatingMenu = () => {
       e.currentTarget.releasePointerCapture(e.pointerId);
     }
     isDragging.current = false;
+    // Reset hasMoved after a tick so the current click cycle can still check it,
+    // but future clicks won't be blocked by a previous drag.
+    requestAnimationFrame(() => {
+      hasMoved.current = false;
+    });
   }, []);
 
   // Close on outside click
