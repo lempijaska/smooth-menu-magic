@@ -621,7 +621,9 @@ const FloatingMenu = () => {
             </div>
           </motion.div>
         )}
-      </AnimatePresence>
+
+      {/* Palette — grid popover */}
+      <AnimatePresence>
         {paletteOpen && menuOpen && (
           <motion.div
             className={`absolute z-10 rounded-2xl border border-menu-glass-border bg-menu-glass/80 p-3 backdrop-blur-2xl shadow-xl shadow-black/25 max-h-[60vh] overflow-y-auto overflow-x-hidden transition-colors ${
