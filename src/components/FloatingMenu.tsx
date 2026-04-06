@@ -606,12 +606,22 @@ const FloatingMenu = () => {
             >
               <MoreHorizontal className="h-[16px] w-[16px]" />
             </motion.button>
+
+            <div className="mx-0.5 h-5 w-px bg-menu-separator/40" />
+
+            {/* Right drag handle — repositions the whole menu */}
+            <div
+              className="flex h-8 w-5 items-center justify-center text-muted-foreground/40 cursor-grab active:cursor-grabbing"
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={onPointerUp}
+            >
+              <GripVertical className="h-3.5 w-3.5" />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Palette — grid popover */}
-      <AnimatePresence>
         {paletteOpen && menuOpen && (
           <motion.div
             className={`absolute z-10 rounded-2xl border border-menu-glass-border bg-menu-glass/80 p-3 backdrop-blur-2xl shadow-xl shadow-black/25 max-h-[60vh] overflow-y-auto overflow-x-hidden transition-colors ${
