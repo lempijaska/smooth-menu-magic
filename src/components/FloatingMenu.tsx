@@ -621,6 +621,7 @@ const FloatingMenu = () => {
             </div>
           </motion.div>
         )}
+      </AnimatePresence>
 
       {/* Palette — grid popover */}
       <AnimatePresence>
