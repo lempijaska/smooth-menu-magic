@@ -722,8 +722,8 @@ const FloatingMenu = () => {
                       transition={{ type: "spring", stiffness: 500, damping: 25 }}
                       onClick={() => handleItemClick(item.id)}
                     >
-                      <Icon className="pointer-events-none h-[16px] w-[16px]" />
-                      <span className="pointer-events-none mt-0.5 text-[9px] font-medium leading-tight opacity-60 truncate max-w-[40px]">
+                      <Icon className="pointer-events-none" style={{ width: paletteIconSize, height: paletteIconSize }} />
+                      <span className="pointer-events-none mt-0.5 font-medium leading-tight opacity-60 truncate" style={{ fontSize: paletteFontSize, maxWidth: PALETTE_ITEM_SIZE - 4 }}>
                         {item.label}
                       </span>
 
