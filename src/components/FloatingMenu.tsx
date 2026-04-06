@@ -132,6 +132,8 @@ const FloatingMenu = () => {
     () => Math.floor((paletteWidth - PALETTE_PAD * 2 - (PALETTE_COLS - 1) * PALETTE_GAP) / PALETTE_COLS),
     [paletteWidth]
   );
+  const paletteIconSize = Math.max(12, Math.round(PALETTE_ITEM_SIZE * 0.38));
+  const paletteFontSize = Math.max(7, Math.round(PALETTE_ITEM_SIZE * 0.22));
 
   const TOOLBAR_HEIGHT = 44; // approximate toolbar outer height
 
