@@ -184,7 +184,7 @@ const FloatingMenu = () => {
   }, []);
 
   // Compute directions based on position
-  const paletteWidthForDir = paletteWidth;
+  
 
   const computeDirections = useCallback(() => {
     const spaceBelow = window.innerHeight - (pos.y + TRIGGER_SIZE);
