@@ -608,7 +608,7 @@ const FloatingMenu = () => {
             className={`absolute z-10 rounded-2xl border border-menu-glass-border bg-menu-glass/80 p-3 backdrop-blur-2xl shadow-xl shadow-black/25 max-h-[60vh] overflow-y-auto overflow-x-hidden transition-colors ${
               openLeft ? "right-0" : "left-0"
             } ${
-              isDragActive && dropOnPalette ? "border-destructive/40" : ""
+              isDragActive && dropOnPalette ? "border-primary/40" : ""
             }`}
             style={{
               top: toolbarAbove ? undefined : TRIGGER_SIZE + 8 + TOOLBAR_HEIGHT + 8,
