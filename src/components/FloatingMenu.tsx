@@ -117,10 +117,20 @@ const FloatingMenu = () => {
     [paletteOrder]
   );
 
-  // Estimate toolbar width for clamping
-  const toolbarWidth = useMemo(
-    () => TRIGGER_SIZE + 8 + pinnedItems.length * (TRIGGER_SIZE + 4) + 1 + (TRIGGER_SIZE + 4) + 16,
-    [pinnedItems.length]
+  // Estimate toolbar width: left grip(20+4sep+4) + items + trailing gap area + sep + more btn + sep + right grip
+  const toolbarWidth = useMemo(() => {
+    const leftHandle = 20 + 4 + 4; // grip + mx + separator
+    const items = pinnedItems.length * (32 + 6); // item width + gap (insert gap 6)
+    const rightSection = 4 + 32 + 4 + 4 + 20; // sep + more + mx + sep + grip
+    const padding = 12; // px-1.5 * 2
+    return leftHandle + items + rightSection + padding;
+  }, [pinnedItems.length]);
+
+  // Palette matches toolbar width; compute item size from that
+  const paletteWidth = toolbarWidth;
+  const PALETTE_ITEM_SIZE = useMemo(
+    () => Math.floor((paletteWidth - PALETTE_PAD * 2 - (PALETTE_COLS - 1) * PALETTE_GAP) / PALETTE_COLS),
+    [paletteWidth]
   );
 
   const TOOLBAR_HEIGHT = 44; // approximate toolbar outer height
