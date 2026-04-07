@@ -45,7 +45,7 @@ const Dock = () => {
   const [mouseX, setMouseX] = useState<number | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [bouncingId, setBouncingId] = useState<string | null>(null);
-  const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     setMouseX(e.clientX);
