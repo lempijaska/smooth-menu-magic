@@ -363,6 +363,23 @@ const FloatingMenu = () => {
   const onPaletteDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // Check for cross-component drop from dock
+    const externalData = decodeDragData(e);
+    if (externalData && externalData.source === "dock" && !draggedItemId) {
+      const menuId = ensureItem(externalData);
+      if (!menuId) { onItemDragEnd(); return; }
+      if (pinnedIds.includes(menuId) || paletteOrder.includes(menuId)) { onItemDragEnd(); return; }
+      const dropIdx = paletteDropIndex ?? paletteOrder.length;
+      setPaletteOrder((po) => {
+        const newPo = [...po];
+        newPo.splice(dropIdx, 0, menuId);
+        return newPo;
+      });
+      onItemDragEnd();
+      return;
+    }
+
     if (!draggedItemId) return;
 
     const dropIdx = paletteDropIndex ?? paletteOrder.length;
@@ -371,7 +388,6 @@ const FloatingMenu = () => {
     if (!fromToolbar) { onItemDragEnd(); return; }
 
     if (paletteDropIndex !== null && paletteDropMode === "replace") {
-      // Replace: swap toolbar item with palette item
       const targetPaletteItemId = paletteOrder[paletteDropIndex];
       if (targetPaletteItemId) {
         const newPinned = [...pinnedIds];
@@ -385,14 +401,11 @@ const FloatingMenu = () => {
         setPaletteOrder(newPalette.filter((id) => !newPinned.includes(id)));
       }
     } else {
-      // Insert: remove from toolbar, place at specific palette position, backfill
       const newPinned = pinnedIds.filter((id) => id !== draggedItemId);
       const newPalette = [...paletteOrder];
       newPalette.splice(dropIdx, 0, draggedItemId);
 
-      // Backfill toolbar from palette
       while (newPinned.length < MAX_PINNED && newPalette.length > 0) {
-        // Find first palette item not already pinned
         const idx = newPalette.findIndex((id) => !newPinned.includes(id) && id !== draggedItemId);
         if (idx === -1) break;
         newPinned.push(newPalette.splice(idx, 1)[0]);
