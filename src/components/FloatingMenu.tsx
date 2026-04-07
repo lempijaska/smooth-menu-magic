@@ -81,10 +81,15 @@ const FloatingMenu = () => {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [activeItem, setActiveItem] = useState("home");
   const [pinnedIds, setPinnedIds] = useState<string[]>(DEFAULT_PINNED_IDS);
+  const [extraItems, setExtraItems] = useState<MenuItem[]>([]);
   const [paletteOrder, setPaletteOrder] = useState<string[]>(
     allItems.filter((item) => !DEFAULT_PINNED_IDS.includes(item.id)).map((item) => item.id)
   );
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+
+  // Combined item lookup (static + dynamic from dock)
+  const allKnownItems = useMemo(() => [...allItems, ...extraItems], [extraItems]);
+  const findItem = useCallback((id: string) => allKnownItems.find((i) => i.id === id), [allKnownItems]);
 
   // Drag-and-drop state
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
