@@ -241,7 +241,12 @@ const FloatingMenu = () => {
     e.stopPropagation();
     setDraggedItemId(id);
     e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", id);
+    const item = allItems.find((i) => i.id === id);
+    if (item) {
+      const data = encodeDragData({ id: item.id, label: item.label, iconName: item.iconName, source: "menu" });
+      e.dataTransfer.setData(DRAG_MIME, data);
+      e.dataTransfer.setData("text/plain", data);
+    }
   };
 
   const onItemDragEnd = () => {
