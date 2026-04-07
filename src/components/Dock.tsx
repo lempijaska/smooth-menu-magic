@@ -59,7 +59,7 @@ const Dock = () => {
   const getScale = useCallback(
     (itemId: string) => {
       if (mouseX === null) return 1;
-      const el = itemRefs.current.get(itemId);
+      const el = itemRefs.current[itemId];
       if (!el) return 1;
       const rect = el.getBoundingClientRect();
       const itemCenterX = rect.left + rect.width / 2;
