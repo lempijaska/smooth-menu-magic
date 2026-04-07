@@ -106,7 +106,7 @@ const Dock = () => {
 
               <button
                 ref={(el) => {
-                  if (el) itemRefs.current.set(item.id, el);
+                  itemRefs.current[item.id] = el;
                 }}
                 onClick={() => handleClick(item.id)}
                 className="flex items-center justify-center rounded-xl bg-secondary/80 text-foreground transition-colors duration-150 hover:bg-[hsl(var(--menu-glass-hover))]"
