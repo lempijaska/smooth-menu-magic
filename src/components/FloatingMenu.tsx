@@ -115,13 +115,13 @@ const FloatingMenu = () => {
   const hasMoved = useRef(false);
 
   const pinnedItems = useMemo(
-    () => pinnedIds.map((id) => allItems.find((item) => item.id === id)!).filter(Boolean),
-    [pinnedIds]
+    () => pinnedIds.map((id) => findItem(id)!).filter(Boolean),
+    [pinnedIds, findItem]
   );
 
   const paletteItems = useMemo(
-    () => paletteOrder.map((id) => allItems.find((item) => item.id === id)!).filter(Boolean),
-    [paletteOrder]
+    () => paletteOrder.map((id) => findItem(id)!).filter(Boolean),
+    [paletteOrder, findItem]
   );
 
   // Estimate toolbar width: left grip(20+4sep+4) + items + trailing gap area + sep + more btn + sep + right grip
