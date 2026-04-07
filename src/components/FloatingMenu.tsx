@@ -410,8 +410,38 @@ const FloatingMenu = () => {
     setDropOnPalette(false);
   };
 
+  // Helper: ensure an external item (from dock) is registered
+  const ensureItem = useCallback((data: { id: string; label: string; iconName: string }): string | null => {
+    const icon = getIcon(data.iconName);
+    if (!icon) return null;
+    // Use the dock id without prefix for menu
+    const menuId = data.id.replace(/^dock-/, "");
+    if (!findItem(menuId)) {
+      setExtraItems((prev) => {
+        if (prev.some((i) => i.id === menuId)) return prev;
+        return [...prev, { id: menuId, icon, label: data.label, iconName: data.iconName }];
+      });
+    }
+    return menuId;
+  }, [findItem]);
+
   const onToolbarDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    // Check for cross-component drop from dock
+    const externalData = decodeDragData(e);
+    if (externalData && externalData.source === "dock") {
+      const menuId = ensureItem(externalData);
+      if (!menuId) { onItemDragEnd(); return; }
+      if (pinnedIds.includes(menuId) || paletteOrder.includes(menuId)) { onItemDragEnd(); return; }
+      const newList = [...pinnedIds, menuId];
+      if (newList.length > MAX_PINNED) {
+        const overflow = newList.pop()!;
+        setPaletteOrder((po) => [...po, overflow]);
+      }
+      setPinnedIds(newList);
+      onItemDragEnd();
+      return;
+    }
     if (!draggedItemId) return;
     if (pinnedIds.includes(draggedItemId)) { onItemDragEnd(); return; }
     const newList = [...pinnedIds, draggedItemId];
