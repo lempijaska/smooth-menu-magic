@@ -1,4 +1,5 @@
 import FloatingMenu from "@/components/FloatingMenu";
+import Dock from "@/components/Dock";
 
 const Index = () => {
   return (
@@ -12,6 +13,7 @@ const Index = () => {
         </p>
       </div>
       <FloatingMenu />
+      <Dock />
     </div>
   );
 };
