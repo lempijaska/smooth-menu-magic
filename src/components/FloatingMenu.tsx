@@ -9,61 +9,63 @@ import {
   Download, Upload, Printer, Trash2, Edit, Eye, X, GripVertical,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { DRAG_MIME, encodeDragData, decodeDragData, getIcon } from "@/lib/icon-registry";
 
 interface MenuItem {
   id: string;
   icon: LucideIcon;
   label: string;
+  iconName: string;
 }
 
 const allItems: MenuItem[] = [
-  { id: "home", icon: Home, label: "Home" },
-  { id: "search", icon: Search, label: "Search" },
-  { id: "bell", icon: Bell, label: "Notifications" },
-  { id: "heart", icon: Heart, label: "Favorites" },
-  { id: "mail", icon: Mail, label: "Messages" },
-  { id: "user", icon: User, label: "Profile" },
-  { id: "settings", icon: Settings, label: "Settings" },
-  { id: "bookmark", icon: Bookmark, label: "Bookmarks" },
-  { id: "share", icon: Share2, label: "Share" },
-  { id: "camera", icon: Camera, label: "Camera" },
-  { id: "zap", icon: Zap, label: "Quick Actions" },
-  { id: "globe", icon: Globe, label: "Globe" },
-  { id: "music", icon: Music, label: "Music" },
-  { id: "video", icon: Video, label: "Video" },
-  { id: "image", icon: Image, label: "Images" },
-  { id: "filetext", icon: FileText, label: "Documents" },
-  { id: "folder", icon: Folder, label: "Folders" },
-  { id: "archive", icon: Archive, label: "Archive" },
-  { id: "cloud", icon: Cloud, label: "Cloud" },
-  { id: "lock", icon: Lock, label: "Lock" },
-  { id: "unlock", icon: Unlock, label: "Unlock" },
-  { id: "star", icon: Star, label: "Starred" },
-  { id: "sun", icon: Sun, label: "Light Mode" },
-  { id: "moon", icon: Moon, label: "Dark Mode" },
-  { id: "coffee", icon: Coffee, label: "Break" },
-  { id: "gift", icon: Gift, label: "Gifts" },
-  { id: "award", icon: Award, label: "Awards" },
-  { id: "target", icon: Target, label: "Goals" },
-  { id: "flag", icon: Flag, label: "Flagged" },
-  { id: "map", icon: Map, label: "Maps" },
-  { id: "compass", icon: Compass, label: "Navigate" },
-  { id: "wifi", icon: Wifi, label: "Network" },
-  { id: "battery", icon: Battery, label: "Battery" },
-  { id: "monitor", icon: Monitor, label: "Desktop" },
-  { id: "smartphone", icon: Smartphone, label: "Mobile" },
-  { id: "tablet", icon: Tablet, label: "Tablet" },
-  { id: "watch", icon: Watch, label: "Watch" },
-  { id: "headphones", icon: Headphones, label: "Audio" },
-  { id: "mic", icon: Mic, label: "Microphone" },
-  { id: "volume", icon: Volume2, label: "Volume" },
-  { id: "download", icon: Download, label: "Downloads" },
-  { id: "upload", icon: Upload, label: "Uploads" },
-  { id: "printer", icon: Printer, label: "Print" },
-  { id: "trash", icon: Trash2, label: "Trash" },
-  { id: "edit", icon: Edit, label: "Edit" },
-  { id: "eye", icon: Eye, label: "Preview" },
-  { id: "zap2", icon: Zap, label: "Power" },
+  { id: "home", icon: Home, label: "Home", iconName: "Home" },
+  { id: "search", icon: Search, label: "Search", iconName: "Search" },
+  { id: "bell", icon: Bell, label: "Notifications", iconName: "Bell" },
+  { id: "heart", icon: Heart, label: "Favorites", iconName: "Heart" },
+  { id: "mail", icon: Mail, label: "Messages", iconName: "Mail" },
+  { id: "user", icon: User, label: "Profile", iconName: "User" },
+  { id: "settings", icon: Settings, label: "Settings", iconName: "Settings" },
+  { id: "bookmark", icon: Bookmark, label: "Bookmarks", iconName: "Bookmark" },
+  { id: "share", icon: Share2, label: "Share", iconName: "Share2" },
+  { id: "camera", icon: Camera, label: "Camera", iconName: "Camera" },
+  { id: "zap", icon: Zap, label: "Quick Actions", iconName: "Zap" },
+  { id: "globe", icon: Globe, label: "Globe", iconName: "Globe" },
+  { id: "music", icon: Music, label: "Music", iconName: "Music" },
+  { id: "video", icon: Video, label: "Video", iconName: "Video" },
+  { id: "image", icon: Image, label: "Images", iconName: "Image" },
+  { id: "filetext", icon: FileText, label: "Documents", iconName: "FileText" },
+  { id: "folder", icon: Folder, label: "Folders", iconName: "Folder" },
+  { id: "archive", icon: Archive, label: "Archive", iconName: "Archive" },
+  { id: "cloud", icon: Cloud, label: "Cloud", iconName: "Cloud" },
+  { id: "lock", icon: Lock, label: "Lock", iconName: "Lock" },
+  { id: "unlock", icon: Unlock, label: "Unlock", iconName: "Unlock" },
+  { id: "star", icon: Star, label: "Starred", iconName: "Star" },
+  { id: "sun", icon: Sun, label: "Light Mode", iconName: "Sun" },
+  { id: "moon", icon: Moon, label: "Dark Mode", iconName: "Moon" },
+  { id: "coffee", icon: Coffee, label: "Break", iconName: "Coffee" },
+  { id: "gift", icon: Gift, label: "Gifts", iconName: "Gift" },
+  { id: "award", icon: Award, label: "Awards", iconName: "Award" },
+  { id: "target", icon: Target, label: "Goals", iconName: "Target" },
+  { id: "flag", icon: Flag, label: "Flagged", iconName: "Flag" },
+  { id: "map", icon: Map, label: "Maps", iconName: "Map" },
+  { id: "compass", icon: Compass, label: "Navigate", iconName: "Compass" },
+  { id: "wifi", icon: Wifi, label: "Network", iconName: "Wifi" },
+  { id: "battery", icon: Battery, label: "Battery", iconName: "Battery" },
+  { id: "monitor", icon: Monitor, label: "Desktop", iconName: "Monitor" },
+  { id: "smartphone", icon: Smartphone, label: "Mobile", iconName: "Smartphone" },
+  { id: "tablet", icon: Tablet, label: "Tablet", iconName: "Tablet" },
+  { id: "watch", icon: Watch, label: "Watch", iconName: "Watch" },
+  { id: "headphones", icon: Headphones, label: "Audio", iconName: "Headphones" },
+  { id: "mic", icon: Mic, label: "Microphone", iconName: "Mic" },
+  { id: "volume", icon: Volume2, label: "Volume", iconName: "Volume2" },
+  { id: "download", icon: Download, label: "Downloads", iconName: "Download" },
+  { id: "upload", icon: Upload, label: "Uploads", iconName: "Upload" },
+  { id: "printer", icon: Printer, label: "Print", iconName: "Printer" },
+  { id: "trash", icon: Trash2, label: "Trash", iconName: "Trash2" },
+  { id: "edit", icon: Edit, label: "Edit", iconName: "Edit" },
+  { id: "eye", icon: Eye, label: "Preview", iconName: "Eye" },
+  { id: "zap2", icon: Zap, label: "Power", iconName: "Zap" },
 ];
 
 const MAX_PINNED = 8;
@@ -79,10 +81,15 @@ const FloatingMenu = () => {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [activeItem, setActiveItem] = useState("home");
   const [pinnedIds, setPinnedIds] = useState<string[]>(DEFAULT_PINNED_IDS);
+  const [extraItems, setExtraItems] = useState<MenuItem[]>([]);
   const [paletteOrder, setPaletteOrder] = useState<string[]>(
     allItems.filter((item) => !DEFAULT_PINNED_IDS.includes(item.id)).map((item) => item.id)
   );
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+
+  // Combined item lookup (static + dynamic from dock)
+  const allKnownItems = useMemo(() => [...allItems, ...extraItems], [extraItems]);
+  const findItem = useCallback((id: string) => allKnownItems.find((i) => i.id === id), [allKnownItems]);
 
   // Drag-and-drop state
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
@@ -108,13 +115,13 @@ const FloatingMenu = () => {
   const hasMoved = useRef(false);
 
   const pinnedItems = useMemo(
-    () => pinnedIds.map((id) => allItems.find((item) => item.id === id)!).filter(Boolean),
-    [pinnedIds]
+    () => pinnedIds.map((id) => findItem(id)!).filter(Boolean),
+    [pinnedIds, findItem]
   );
 
   const paletteItems = useMemo(
-    () => paletteOrder.map((id) => allItems.find((item) => item.id === id)!).filter(Boolean),
-    [paletteOrder]
+    () => paletteOrder.map((id) => findItem(id)!).filter(Boolean),
+    [paletteOrder, findItem]
   );
 
   // Estimate toolbar width: left grip(20+4sep+4) + items + trailing gap area + sep + more btn + sep + right grip
@@ -239,7 +246,12 @@ const FloatingMenu = () => {
     e.stopPropagation();
     setDraggedItemId(id);
     e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", id);
+    const item = allItems.find((i) => i.id === id);
+    if (item) {
+      const data = encodeDragData({ id: item.id, label: item.label, iconName: item.iconName, source: "menu" });
+      e.dataTransfer.setData(DRAG_MIME, data);
+      e.dataTransfer.setData("text/plain", data);
+    }
   };
 
   const onItemDragEnd = () => {
@@ -351,6 +363,23 @@ const FloatingMenu = () => {
   const onPaletteDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // Check for cross-component drop from dock
+    const externalData = decodeDragData(e);
+    if (externalData && externalData.source === "dock" && !draggedItemId) {
+      const menuId = ensureItem(externalData);
+      if (!menuId) { onItemDragEnd(); return; }
+      if (pinnedIds.includes(menuId) || paletteOrder.includes(menuId)) { onItemDragEnd(); return; }
+      const dropIdx = paletteDropIndex ?? paletteOrder.length;
+      setPaletteOrder((po) => {
+        const newPo = [...po];
+        newPo.splice(dropIdx, 0, menuId);
+        return newPo;
+      });
+      onItemDragEnd();
+      return;
+    }
+
     if (!draggedItemId) return;
 
     const dropIdx = paletteDropIndex ?? paletteOrder.length;
@@ -359,7 +388,6 @@ const FloatingMenu = () => {
     if (!fromToolbar) { onItemDragEnd(); return; }
 
     if (paletteDropIndex !== null && paletteDropMode === "replace") {
-      // Replace: swap toolbar item with palette item
       const targetPaletteItemId = paletteOrder[paletteDropIndex];
       if (targetPaletteItemId) {
         const newPinned = [...pinnedIds];
@@ -373,14 +401,11 @@ const FloatingMenu = () => {
         setPaletteOrder(newPalette.filter((id) => !newPinned.includes(id)));
       }
     } else {
-      // Insert: remove from toolbar, place at specific palette position, backfill
       const newPinned = pinnedIds.filter((id) => id !== draggedItemId);
       const newPalette = [...paletteOrder];
       newPalette.splice(dropIdx, 0, draggedItemId);
 
-      // Backfill toolbar from palette
       while (newPinned.length < MAX_PINNED && newPalette.length > 0) {
-        // Find first palette item not already pinned
         const idx = newPalette.findIndex((id) => !newPinned.includes(id) && id !== draggedItemId);
         if (idx === -1) break;
         newPinned.push(newPalette.splice(idx, 1)[0]);
@@ -398,8 +423,38 @@ const FloatingMenu = () => {
     setDropOnPalette(false);
   };
 
+  // Helper: ensure an external item (from dock) is registered
+  const ensureItem = useCallback((data: { id: string; label: string; iconName: string }): string | null => {
+    const icon = getIcon(data.iconName);
+    if (!icon) return null;
+    // Use the dock id without prefix for menu
+    const menuId = data.id.replace(/^dock-/, "");
+    if (!findItem(menuId)) {
+      setExtraItems((prev) => {
+        if (prev.some((i) => i.id === menuId)) return prev;
+        return [...prev, { id: menuId, icon, label: data.label, iconName: data.iconName }];
+      });
+    }
+    return menuId;
+  }, [findItem]);
+
   const onToolbarDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    // Check for cross-component drop from dock
+    const externalData = decodeDragData(e);
+    if (externalData && externalData.source === "dock") {
+      const menuId = ensureItem(externalData);
+      if (!menuId) { onItemDragEnd(); return; }
+      if (pinnedIds.includes(menuId) || paletteOrder.includes(menuId)) { onItemDragEnd(); return; }
+      const newList = [...pinnedIds, menuId];
+      if (newList.length > MAX_PINNED) {
+        const overflow = newList.pop()!;
+        setPaletteOrder((po) => [...po, overflow]);
+      }
+      setPinnedIds(newList);
+      onItemDragEnd();
+      return;
+    }
     if (!draggedItemId) return;
     if (pinnedIds.includes(draggedItemId)) { onItemDragEnd(); return; }
     const newList = [...pinnedIds, draggedItemId];
