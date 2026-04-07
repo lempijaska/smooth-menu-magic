@@ -9,11 +9,13 @@ import {
   Download, Upload, Printer, Trash2, Edit, Eye, X, GripVertical,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { DRAG_MIME, encodeDragData, decodeDragData, getIcon } from "@/lib/icon-registry";
 
 interface MenuItem {
   id: string;
   icon: LucideIcon;
   label: string;
+  iconName: string;
 }
 
 const allItems: MenuItem[] = [
