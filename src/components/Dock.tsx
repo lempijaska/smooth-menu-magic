@@ -233,8 +233,8 @@ const Dock = () => {
         {utilityItems.map((item) => renderItem(item))}
       </div>
 
-      {/* Reflection / glow */}
       <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-2 rounded-full bg-[hsl(var(--menu-glow)/0.15)] blur-md" />
+      <DockSettings open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
 };
