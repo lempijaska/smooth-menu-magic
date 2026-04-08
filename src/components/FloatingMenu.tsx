@@ -134,7 +134,7 @@ const FloatingMenu = () => {
   }, [pinnedItems.length]);
 
   // Palette matches toolbar width; compute item size from that
-  const paletteWidth = toolbarWidth;
+  const paletteWidth = toolbarWidth + TRIGGER_SIZE + 8; // trigger + gap + toolbar
   const PALETTE_ITEM_SIZE = useMemo(
     () => Math.floor((paletteWidth - PALETTE_PAD * 2 - (PALETTE_COLS - 1) * PALETTE_GAP) / PALETTE_COLS),
     [paletteWidth]
@@ -509,9 +509,7 @@ const FloatingMenu = () => {
           <motion.div
             className={`absolute z-10 flex items-center gap-0.5 rounded-2xl border border-menu-glass-border bg-menu-glass/80 px-1.5 py-1.5 backdrop-blur-2xl shadow-xl shadow-black/25 transition-colors ${
               toolbarAbove ? "bottom-full mb-2" : "top-full mt-2"
-            } ${
-              openLeft ? "right-0" : "left-0"
-            } ${
+            } right-0 ${
               isDragActive && !dropOnPalette ? "border-primary/40" : ""
             }`}
             initial={{ opacity: 0, y: toolbarAbove ? 8 : -8, scale: 0.92 }}
@@ -684,7 +682,7 @@ const FloatingMenu = () => {
       <AnimatePresence>
         {paletteOpen && menuOpen && (
           <motion.div
-            className={`absolute z-10 rounded-2xl border border-menu-glass-border bg-menu-glass/80 p-3 backdrop-blur-2xl shadow-xl shadow-black/25 max-h-[60vh] overflow-y-auto overflow-x-hidden transition-colors ${
+            className={`absolute z-10 rounded-2xl border border-menu-glass-border bg-menu-glass/80 p-3 backdrop-blur-2xl shadow-xl shadow-black/25 max-h-[60vh] overflow-y-auto overflow-x-hidden transition-colors right-0 ${
               openLeft ? "right-0" : "left-0"
             } ${
               isDragActive && dropOnPalette ? "border-primary/40" : ""
