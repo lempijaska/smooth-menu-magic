@@ -16,6 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { DRAG_MIME, encodeDragData, decodeDragData, getIcon } from "@/lib/icon-registry";
+import DockSettings from "@/components/DockSettings";
 
 interface DockItem {
   id: string;
@@ -54,7 +55,7 @@ const Dock = () => {
   const [bouncingId, setBouncingId] = useState<string | null>(null);
   const [mainItems, setMainItems] = useState<DockItem[]>(initialMainItems);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [binDragOver, setBinDragOver] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -82,6 +83,10 @@ const Dock = () => {
   );
 
   const handleClick = (id: string) => {
+    if (id === "dock-settings") {
+      setSettingsOpen(true);
+      return;
+    }
     setBouncingId(id);
     setTimeout(() => setBouncingId(null), 600);
   };
