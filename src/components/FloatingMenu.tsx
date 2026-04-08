@@ -507,11 +507,10 @@ const FloatingMenu = () => {
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            className={`absolute z-10 flex items-center gap-0.5 rounded-2xl border border-menu-glass-border bg-menu-glass/80 px-1.5 py-1.5 backdrop-blur-2xl shadow-xl shadow-black/25 transition-colors ${
-              toolbarAbove ? "bottom-full mb-2" : "top-full mt-2"
-            } right-0 ${
+            className={`absolute z-10 flex items-center gap-0.5 rounded-2xl border border-menu-glass-border bg-menu-glass/80 px-1.5 py-1.5 backdrop-blur-2xl shadow-xl shadow-black/25 transition-colors top-0 ${
               isDragActive && !dropOnPalette ? "border-primary/40" : ""
             }`}
+            style={{ left: TRIGGER_SIZE + 8 }}
             initial={{ opacity: 0, y: toolbarAbove ? 8 : -8, scale: 0.92 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: toolbarAbove ? 8 : -8, scale: 0.92 }}
@@ -682,12 +681,12 @@ const FloatingMenu = () => {
       <AnimatePresence>
         {paletteOpen && menuOpen && (
           <motion.div
-            className={`absolute z-10 rounded-2xl border border-menu-glass-border bg-menu-glass/80 p-3 backdrop-blur-2xl shadow-xl shadow-black/25 max-h-[60vh] overflow-y-auto overflow-x-hidden transition-colors right-0 ${
+            className={`absolute z-10 rounded-2xl border border-menu-glass-border bg-menu-glass/80 p-3 backdrop-blur-2xl shadow-xl shadow-black/25 max-h-[60vh] overflow-y-auto overflow-x-hidden transition-colors ${
               isDragActive && dropOnPalette ? "border-primary/40" : ""
             }`}
             style={{
-              top: toolbarAbove ? undefined : TRIGGER_SIZE + 8 + TOOLBAR_HEIGHT + 8,
-              bottom: toolbarAbove ? TRIGGER_SIZE + 8 + TOOLBAR_HEIGHT + 8 : undefined,
+              top: TOOLBAR_HEIGHT + 8,
+              left: TRIGGER_SIZE + 8,
               width: paletteWidth,
             }}
             initial={{ opacity: 0, y: toolbarAbove ? 12 : -12, scale: 0.95 }}
