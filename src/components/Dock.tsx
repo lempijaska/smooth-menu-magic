@@ -54,6 +54,7 @@ const Dock = () => {
   const [bouncingId, setBouncingId] = useState<string | null>(null);
   const [mainItems, setMainItems] = useState<DockItem[]>(initialMainItems);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [binDragOver, setBinDragOver] = useState(false);
   const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
