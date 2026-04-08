@@ -16,6 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { DRAG_MIME, encodeDragData, decodeDragData, getIcon } from "@/lib/icon-registry";
+import DockSettings from "@/components/DockSettings";
 
 interface DockItem {
   id: string;
@@ -54,7 +55,7 @@ const Dock = () => {
   const [bouncingId, setBouncingId] = useState<string | null>(null);
   const [mainItems, setMainItems] = useState<DockItem[]>(initialMainItems);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [binDragOver, setBinDragOver] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -82,6 +83,10 @@ const Dock = () => {
   );
 
   const handleClick = (id: string) => {
+    if (id === "dock-settings") {
+      setSettingsOpen(true);
+      return;
+    }
     setBouncingId(id);
     setTimeout(() => setBouncingId(null), 600);
   };
@@ -144,7 +149,6 @@ const Dock = () => {
     const isBouncing = bouncingId === item.id;
     const isUtility = utilityItems.some((u) => u.id === item.id);
     const isBin = item.id === "dock-trash";
-    const isBinBouncing = isBin && binDragOver;
 
     return (
       <div
@@ -152,12 +156,10 @@ const Dock = () => {
         className="flex flex-col items-center"
         onMouseEnter={() => setHoveredId(item.id)}
         onMouseLeave={() => setHoveredId(null)}
-        onDragOver={isBin ? (e) => { e.preventDefault(); e.stopPropagation(); setBinDragOver(true); } : undefined}
-        onDragLeave={isBin ? () => setBinDragOver(false) : undefined}
+        onDragOver={isBin ? (e) => { e.preventDefault(); e.stopPropagation(); } : undefined}
         onDrop={isBin ? (e) => {
           e.preventDefault();
           e.stopPropagation();
-          setBinDragOver(false);
           const data = decodeDragData(e);
           if (!data) return;
           if (data.source === "dock") {
@@ -183,25 +185,21 @@ const Dock = () => {
           onDragStart={(e) => onDragStart(e, item)}
           onDragEnd={(e) => onDragEnd(e, item)}
           onClick={() => handleClick(item.id)}
-          className={`flex items-center justify-center rounded-xl bg-secondary/80 text-foreground transition-colors duration-150 hover:bg-[hsl(var(--menu-glass-hover))] cursor-grab active:cursor-grabbing ${
-            isBinBouncing ? "ring-2 ring-destructive/60" : ""
-          }`}
+          className="flex items-center justify-center rounded-xl bg-secondary/80 text-foreground transition-colors duration-150 hover:bg-[hsl(var(--menu-glass-hover))] cursor-grab active:cursor-grabbing"
           style={{
             width: BASE_SIZE,
             height: BASE_SIZE,
-            transform: `scale(${scale})${isBouncing ? " translateY(-16px)" : ""}${isBinBouncing ? " translateY(-12px) scale(1.15)" : ""}`,
+            transform: `scale(${scale})${isBouncing ? " translateY(-16px)" : ""}`,
             transformOrigin: "bottom center",
             transition: isBouncing
               ? "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)"
-              : isBinBouncing
-                ? "transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)"
-                : "transform 0.15s ease-out",
+              : "transform 0.15s ease-out",
           }}
         >
           <Icon
             size={BASE_SIZE * 0.5}
             strokeWidth={1.5}
-            className={isBinBouncing ? "text-destructive" : "text-foreground"}
+            className="text-foreground"
           />
         </button>
       </div>
@@ -235,8 +233,8 @@ const Dock = () => {
         {utilityItems.map((item) => renderItem(item))}
       </div>
 
-      {/* Reflection / glow */}
       <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-2 rounded-full bg-[hsl(var(--menu-glow)/0.15)] blur-md" />
+      <DockSettings open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
 };
