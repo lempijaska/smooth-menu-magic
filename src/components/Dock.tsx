@@ -149,7 +149,6 @@ const Dock = () => {
     const isBouncing = bouncingId === item.id;
     const isUtility = utilityItems.some((u) => u.id === item.id);
     const isBin = item.id === "dock-trash";
-    const isBinBouncing = isBin && binDragOver;
 
     return (
       <div
@@ -157,12 +156,10 @@ const Dock = () => {
         className="flex flex-col items-center"
         onMouseEnter={() => setHoveredId(item.id)}
         onMouseLeave={() => setHoveredId(null)}
-        onDragOver={isBin ? (e) => { e.preventDefault(); e.stopPropagation(); setBinDragOver(true); } : undefined}
-        onDragLeave={isBin ? () => setBinDragOver(false) : undefined}
+        onDragOver={isBin ? (e) => { e.preventDefault(); e.stopPropagation(); } : undefined}
         onDrop={isBin ? (e) => {
           e.preventDefault();
           e.stopPropagation();
-          setBinDragOver(false);
           const data = decodeDragData(e);
           if (!data) return;
           if (data.source === "dock") {
@@ -188,25 +185,21 @@ const Dock = () => {
           onDragStart={(e) => onDragStart(e, item)}
           onDragEnd={(e) => onDragEnd(e, item)}
           onClick={() => handleClick(item.id)}
-          className={`flex items-center justify-center rounded-xl bg-secondary/80 text-foreground transition-colors duration-150 hover:bg-[hsl(var(--menu-glass-hover))] cursor-grab active:cursor-grabbing ${
-            isBinBouncing ? "ring-2 ring-destructive/60" : ""
-          }`}
+          className="flex items-center justify-center rounded-xl bg-secondary/80 text-foreground transition-colors duration-150 hover:bg-[hsl(var(--menu-glass-hover))] cursor-grab active:cursor-grabbing"
           style={{
             width: BASE_SIZE,
             height: BASE_SIZE,
-            transform: `scale(${scale})${isBouncing ? " translateY(-16px)" : ""}${isBinBouncing ? " translateY(-12px) scale(1.15)" : ""}`,
+            transform: `scale(${scale})${isBouncing ? " translateY(-16px)" : ""}`,
             transformOrigin: "bottom center",
             transition: isBouncing
               ? "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)"
-              : isBinBouncing
-                ? "transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)"
-                : "transform 0.15s ease-out",
+              : "transform 0.15s ease-out",
           }}
         >
           <Icon
             size={BASE_SIZE * 0.5}
             strokeWidth={1.5}
-            className={isBinBouncing ? "text-destructive" : "text-foreground"}
+            className="text-foreground"
           />
         </button>
       </div>
