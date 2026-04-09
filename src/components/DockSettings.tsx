@@ -1,12 +1,6 @@
-import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Settings, Accessibility, LayoutDashboard } from "lucide-react";
+import { Settings, Accessibility, LayoutDashboard, X } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -116,6 +110,23 @@ const DockSettingsContent = () => (
 
 const DockSettings = ({ open, onOpenChange }: DockSettingsProps) => {
   const [activeSection, setActiveSection] = useState<Section>("general");
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        onOpenChange(false);
+      }
+    };
+    // Delay to avoid the click that opened it
+    const timer = setTimeout(() => document.addEventListener("mousedown", handler), 100);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("mousedown", handler);
+    };
+  }, [open, onOpenChange]);
 
   const renderContent = () => {
     switch (activeSection) {
@@ -125,45 +136,57 @@ const DockSettings = ({ open, onOpenChange }: DockSettingsProps) => {
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden">
-        <div className="flex min-h-[400px]">
-          {/* Left sidebar */}
-          <div className="w-48 border-r bg-muted/30 p-4 flex flex-col gap-1">
-            <DialogHeader className="mb-4">
-              <DialogTitle className="text-sm font-semibold">Dock</DialogTitle>
-            </DialogHeader>
-            {sections.map((section) => {
-              const Icon = section.icon;
-              return (
-                <button
-                  key={section.id}
-                  onClick={() => setActiveSection(section.id)}
-                  className={cn(
-                    "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors text-left",
-                    activeSection === section.id
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {section.label}
-                </button>
-              );
-            })}
-          </div>
+  if (!open) return null;
 
-          {/* Right content */}
-          <div className="flex-1 p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4 capitalize">
+  return (
+    <div
+      ref={panelRef}
+      className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-[560px] rounded-2xl border border-[hsl(var(--menu-glass-border))] bg-[hsl(var(--menu-glass)/0.85)] backdrop-blur-2xl shadow-2xl shadow-black/30 overflow-hidden z-50"
+      style={{ animation: "scale-in 0.2s ease-out" }}
+    >
+      <div className="flex min-h-[360px]">
+        {/* Left sidebar */}
+        <div className="w-44 border-r border-[hsl(var(--menu-glass-border))] bg-[hsl(var(--menu-glass)/0.5)] p-4 flex flex-col gap-1">
+          <div className="mb-4">
+            <h2 className="text-sm font-semibold text-foreground">Dock</h2>
+          </div>
+          {sections.map((section) => {
+            const Icon = section.icon;
+            return (
+              <button
+                key={section.id}
+                onClick={() => setActiveSection(section.id)}
+                className={cn(
+                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors text-left",
+                  activeSection === section.id
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-[hsl(var(--menu-glass-hover))] hover:text-foreground"
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {section.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Right content */}
+        <div className="flex-1 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-foreground capitalize">
               {activeSection}
             </h2>
-            {renderContent()}
+            <button
+              onClick={() => onOpenChange(false)}
+              className="h-6 w-6 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-[hsl(var(--menu-glass-hover))] transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
+          {renderContent()}
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 };
 
