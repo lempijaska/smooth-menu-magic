@@ -6,8 +6,8 @@ const Index = () => {
     <div
       className="flex min-h-screen items-center justify-center bg-background"
       style={{
-        backgroundImage: "radial-gradient(circle, hsl(var(--muted-foreground) / 0.15) 1px, transparent 1px)",
-        backgroundSize: "24px 24px",
+        backgroundImage: "radial-gradient(circle, hsl(var(--muted-foreground) / 0.18) 1px, transparent 1px)",
+        backgroundSize: "20px 20px",
       }}
     >
       <div className="text-center">

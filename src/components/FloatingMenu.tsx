@@ -185,7 +185,10 @@ const FloatingMenu = () => {
     const onDragEnd = () => { setTimeout(() => { isDraggingRef.current = false; }, 200); };
     const handler = (e: MouseEvent) => {
       if (isDraggingRef.current) return;
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      // Don't close if the click is on a draggable element (e.g. dock items)
+      const target = e.target as HTMLElement;
+      if (target.closest?.('[draggable="true"]')) return;
+      if (containerRef.current && !containerRef.current.contains(target)) {
         setMenuOpen(false);
         setPaletteOpen(false);
       }
