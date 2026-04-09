@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { Settings, Accessibility, LayoutDashboard, X } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
@@ -10,6 +10,8 @@ type Section = "general" | "accessibility" | "dock";
 interface DockSettingsProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  animationsEnabled: boolean;
+  onAnimationsChange: (enabled: boolean) => void;
 }
 
 const sections: { id: Section; label: string; icon: typeof Settings }[] = [
@@ -18,7 +20,13 @@ const sections: { id: Section; label: string; icon: typeof Settings }[] = [
   { id: "dock", label: "Dock", icon: LayoutDashboard },
 ];
 
-const GeneralSettings = () => (
+const GeneralSettings = ({
+  animationsEnabled,
+  onAnimationsChange,
+}: {
+  animationsEnabled: boolean;
+  onAnimationsChange: (v: boolean) => void;
+}) => (
   <div className="space-y-6">
     <div>
       <h3 className="text-sm font-medium text-foreground mb-1">Appearance</h3>
@@ -26,7 +34,11 @@ const GeneralSettings = () => (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <Label htmlFor="animations" className="text-sm">Enable animations</Label>
-          <Switch id="animations" defaultChecked />
+          <Switch
+            id="animations"
+            checked={animationsEnabled}
+            onCheckedChange={onAnimationsChange}
+          />
         </div>
         <div className="flex items-center justify-between">
           <Label htmlFor="transparency" className="text-sm">Reduce transparency</Label>
@@ -108,9 +120,41 @@ const DockSettingsContent = () => (
   </div>
 );
 
-const DockSettings = ({ open, onOpenChange }: DockSettingsProps) => {
+const DockSettings = ({ open, onOpenChange, animationsEnabled, onAnimationsChange }: DockSettingsProps) => {
   const [activeSection, setActiveSection] = useState<Section>("general");
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Dragging state
+  const [panelPos, setPanelPos] = useState({ x: window.innerWidth / 2 - 280, y: window.innerHeight / 2 - 200 });
+  const dragState = useRef({ dragging: false, startX: 0, startY: 0, origX: 0, origY: 0 });
+
+  const onHeaderPointerDown = useCallback((e: React.PointerEvent) => {
+    dragState.current = {
+      dragging: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      origX: panelPos.x,
+      origY: panelPos.y,
+    };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }, [panelPos]);
+
+  const onHeaderPointerMove = useCallback((e: React.PointerEvent) => {
+    if (!dragState.current.dragging) return;
+    const dx = e.clientX - dragState.current.startX;
+    const dy = e.clientY - dragState.current.startY;
+    setPanelPos({
+      x: Math.max(0, Math.min(window.innerWidth - 560, dragState.current.origX + dx)),
+      y: Math.max(0, Math.min(window.innerHeight - 400, dragState.current.origY + dy)),
+    });
+  }, []);
+
+  const onHeaderPointerUp = useCallback((e: React.PointerEvent) => {
+    dragState.current.dragging = false;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+  }, []);
 
   // Close on outside click
   useEffect(() => {
@@ -120,7 +164,6 @@ const DockSettings = ({ open, onOpenChange }: DockSettingsProps) => {
         onOpenChange(false);
       }
     };
-    // Delay to avoid the click that opened it
     const timer = setTimeout(() => document.addEventListener("mousedown", handler), 100);
     return () => {
       clearTimeout(timer);
@@ -128,9 +171,21 @@ const DockSettings = ({ open, onOpenChange }: DockSettingsProps) => {
     };
   }, [open, onOpenChange]);
 
+  // Reset position when opened
+  useEffect(() => {
+    if (open) {
+      setPanelPos({ x: window.innerWidth / 2 - 280, y: window.innerHeight / 2 - 200 });
+    }
+  }, [open]);
+
   const renderContent = () => {
     switch (activeSection) {
-      case "general": return <GeneralSettings />;
+      case "general": return (
+        <GeneralSettings
+          animationsEnabled={animationsEnabled}
+          onAnimationsChange={onAnimationsChange}
+        />
+      );
       case "accessibility": return <AccessibilitySettings />;
       case "dock": return <DockSettingsContent />;
     }
@@ -141,15 +196,32 @@ const DockSettings = ({ open, onOpenChange }: DockSettingsProps) => {
   return (
     <div
       ref={panelRef}
-      className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-[560px] rounded-2xl border border-[hsl(var(--menu-glass-border))] bg-[hsl(var(--menu-glass)/0.85)] backdrop-blur-2xl shadow-2xl shadow-black/30 overflow-hidden z-50"
-      style={{ animation: "scale-in 0.2s ease-out" }}
+      className="fixed w-[560px] rounded-2xl border border-border bg-card shadow-2xl shadow-black/10 overflow-hidden z-[100]"
+      style={{
+        left: panelPos.x,
+        top: panelPos.y,
+        animation: "scale-in 0.2s ease-out",
+      }}
     >
-      <div className="flex min-h-[360px]">
+      {/* Draggable header */}
+      <div
+        className="flex items-center justify-between px-4 py-3 border-b border-border cursor-grab active:cursor-grabbing select-none bg-muted/50"
+        onPointerDown={onHeaderPointerDown}
+        onPointerMove={onHeaderPointerMove}
+        onPointerUp={onHeaderPointerUp}
+      >
+        <h2 className="text-sm font-semibold text-foreground">Settings</h2>
+        <button
+          onClick={() => onOpenChange(false)}
+          className="h-6 w-6 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="flex min-h-[340px]">
         {/* Left sidebar */}
-        <div className="w-44 border-r border-[hsl(var(--menu-glass-border))] bg-[hsl(var(--menu-glass)/0.5)] p-4 flex flex-col gap-1">
-          <div className="mb-4">
-            <h2 className="text-sm font-semibold text-foreground">Dock</h2>
-          </div>
+        <div className="w-44 border-r border-border bg-muted/30 p-4 flex flex-col gap-1">
           {sections.map((section) => {
             const Icon = section.icon;
             return (
@@ -160,7 +232,7 @@ const DockSettings = ({ open, onOpenChange }: DockSettingsProps) => {
                   "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors text-left",
                   activeSection === section.id
                     ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-[hsl(var(--menu-glass-hover))] hover:text-foreground"
+                    : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -172,16 +244,10 @@ const DockSettings = ({ open, onOpenChange }: DockSettingsProps) => {
 
         {/* Right content */}
         <div className="flex-1 p-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4">
             <h2 className="text-lg font-semibold text-foreground capitalize">
               {activeSection}
             </h2>
-            <button
-              onClick={() => onOpenChange(false)}
-              className="h-6 w-6 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-[hsl(var(--menu-glass-hover))] transition-colors"
-            >
-              <X className="h-4 w-4" />
-            </button>
           </div>
           {renderContent()}
         </div>
