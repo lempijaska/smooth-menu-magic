@@ -56,6 +56,7 @@ const Dock = () => {
   const [mainItems, setMainItems] = useState<DockItem[]>(initialMainItems);
   const [isDragOver, setIsDragOver] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [insertIndex, setInsertIndex] = useState<number | null>(null);
   const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -84,7 +85,7 @@ const Dock = () => {
 
   const handleClick = (id: string) => {
     if (id === "dock-settings") {
-      setSettingsOpen(true);
+      setSettingsOpen((v) => !v);
       return;
     }
     setBouncingId(id);
@@ -106,15 +107,38 @@ const Dock = () => {
   const onDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(true);
+
+    // Calculate insert index based on mouse position
+    const dockEl = dockRef.current;
+    if (!dockEl) return;
+
+    const mouseClientX = e.clientX;
+    let bestIndex = mainItems.length;
+
+    for (let i = 0; i < mainItems.length; i++) {
+      const el = itemRefs.current[mainItems[i].id];
+      if (!el) continue;
+      const rect = el.getBoundingClientRect();
+      const midX = rect.left + rect.width / 2;
+      if (mouseClientX < midX) {
+        bestIndex = i;
+        break;
+      }
+    }
+    setInsertIndex(bestIndex);
   };
 
   const onDragLeave = () => {
     setIsDragOver(false);
+    setInsertIndex(null);
   };
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
+    const dropIdx = insertIndex ?? mainItems.length;
+    setInsertIndex(null);
+
     const data = decodeDragData(e);
     if (!data || data.source !== "menu") return;
 
@@ -124,18 +148,15 @@ const Dock = () => {
     const dockId = `dock-${data.id}`;
     if (mainItems.some((i) => i.id === dockId)) return;
 
-    setMainItems((prev) => [
-      ...prev,
-      { id: dockId, icon, label: data.label, iconName: data.iconName },
-    ]);
+    setMainItems((prev) => {
+      const newItems = [...prev];
+      newItems.splice(dropIdx, 0, { id: dockId, icon, label: data.label, iconName: data.iconName });
+      return newItems;
+    });
   };
 
   const onDragEnd = (e: React.DragEvent, item: DockItem) => {
-    // If dropped outside (on the menu), remove from dock
-    // The menu component handles adding; we listen for a custom event
-    // For simplicity, we check dropEffect
     if (e.dataTransfer.dropEffect === "move") {
-      // Item was accepted somewhere else — but only remove if it's not a utility item
       const isUtility = utilityItems.some((u) => u.id === item.id);
       if (!isUtility) {
         setMainItems((prev) => prev.filter((i) => i.id !== item.id));
@@ -143,17 +164,18 @@ const Dock = () => {
     }
   };
 
-  const renderItem = (item: DockItem) => {
+  const renderItem = (item: DockItem, index: number) => {
     const scale = getScale(item.id);
     const Icon = item.icon;
     const isBouncing = bouncingId === item.id;
     const isUtility = utilityItems.some((u) => u.id === item.id);
     const isBin = item.id === "dock-trash";
+    const showInsertGap = insertIndex === index && isDragOver;
 
     return (
       <div
         key={item.id}
-        className="flex flex-col items-center"
+        className="flex items-end"
         onMouseEnter={() => setHoveredId(item.id)}
         onMouseLeave={() => setHoveredId(null)}
         onDragOver={isBin ? (e) => { e.preventDefault(); e.stopPropagation(); } : undefined}
@@ -170,47 +192,73 @@ const Dock = () => {
           }
         } : undefined}
       >
-        <div
-          className="pointer-events-none mb-1 px-2 py-0.5 rounded-md text-xs font-medium bg-secondary text-secondary-foreground whitespace-nowrap transition-opacity duration-150"
-          style={{ opacity: hoveredId === item.id ? 1 : 0 }}
-        >
-          {item.label}
-        </div>
+        {/* Animated insert gap */}
+        {!isUtility && (
+          <div
+            className="flex items-end justify-center overflow-hidden transition-all duration-200 ease-out"
+            style={{
+              width: showInsertGap ? BASE_SIZE + 8 : 0,
+              height: BASE_SIZE,
+            }}
+          >
+            <div
+              className="rounded-full bg-primary transition-all duration-200 ease-out"
+              style={{
+                width: showInsertGap ? 3 : 0,
+                height: showInsertGap ? 24 : 0,
+                opacity: showInsertGap ? 1 : 0,
+                marginBottom: 12,
+              }}
+            />
+          </div>
+        )}
 
-        <button
-          ref={(el) => {
-            itemRefs.current[item.id] = el;
-          }}
-          draggable={!isUtility}
-          onDragStart={(e) => onDragStart(e, item)}
-          onDragEnd={(e) => onDragEnd(e, item)}
-          onClick={() => handleClick(item.id)}
-          className="flex items-center justify-center rounded-xl bg-secondary/80 text-foreground transition-colors duration-150 hover:bg-[hsl(var(--menu-glass-hover))] cursor-grab active:cursor-grabbing"
-          style={{
-            width: BASE_SIZE,
-            height: BASE_SIZE,
-            transform: `scale(${scale})${isBouncing ? " translateY(-16px)" : ""}`,
-            transformOrigin: "bottom center",
-            transition: isBouncing
-              ? "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)"
-              : "transform 0.15s ease-out",
-          }}
-        >
-          <Icon
-            size={BASE_SIZE * 0.5}
-            strokeWidth={1.5}
-            className="text-foreground"
-          />
-        </button>
+        <div className="flex flex-col items-center">
+          <div
+            className="pointer-events-none mb-1 px-2 py-0.5 rounded-md text-xs font-medium bg-secondary text-secondary-foreground whitespace-nowrap transition-opacity duration-150"
+            style={{ opacity: hoveredId === item.id ? 1 : 0 }}
+          >
+            {item.label}
+          </div>
+
+          <button
+            ref={(el) => {
+              itemRefs.current[item.id] = el;
+            }}
+            draggable={!isUtility}
+            onDragStart={(e) => onDragStart(e, item)}
+            onDragEnd={(e) => onDragEnd(e, item)}
+            onClick={() => handleClick(item.id)}
+            className="flex items-center justify-center rounded-xl bg-secondary/80 text-foreground transition-colors duration-150 hover:bg-[hsl(var(--menu-glass-hover))] cursor-grab active:cursor-grabbing"
+            style={{
+              width: BASE_SIZE,
+              height: BASE_SIZE,
+              transform: `scale(${scale})${isBouncing ? " translateY(-16px)" : ""}`,
+              transformOrigin: "bottom center",
+              transition: isBouncing
+                ? "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)"
+                : "transform 0.15s ease-out",
+            }}
+          >
+            <Icon
+              size={BASE_SIZE * 0.5}
+              strokeWidth={1.5}
+              className="text-foreground"
+            />
+          </button>
+        </div>
       </div>
     );
   };
+
+  // Trailing insert gap (after last main item)
+  const showTrailingGap = insertIndex === mainItems.length && isDragOver;
 
   return (
     <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-50">
       <div
         ref={dockRef}
-        className={`flex items-end gap-1 px-3 py-2 rounded-2xl border bg-[hsl(var(--menu-glass)/0.8)] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-colors ${
+        className={`flex items-end px-3 py-2 rounded-2xl border bg-[hsl(var(--menu-glass)/0.8)] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-colors ${
           isDragOver
             ? "border-primary/40"
             : "border-[hsl(var(--menu-glass-border))]"
@@ -221,16 +269,39 @@ const Dock = () => {
         onDragLeave={onDragLeave}
         onDrop={onDrop}
       >
-        {/* Main items */}
-        {mainItems.map((item) => renderItem(item))}
+        {/* Main items with equal gap */}
+        <div className="flex items-end gap-1">
+          {mainItems.map((item, i) => renderItem(item, i))}
+
+          {/* Trailing insert gap */}
+          <div
+            className="flex items-end justify-center overflow-hidden transition-all duration-200 ease-out"
+            style={{
+              width: showTrailingGap ? BASE_SIZE + 8 : 0,
+              height: BASE_SIZE,
+            }}
+          >
+            <div
+              className="rounded-full bg-primary transition-all duration-200 ease-out"
+              style={{
+                width: showTrailingGap ? 3 : 0,
+                height: showTrailingGap ? 24 : 0,
+                opacity: showTrailingGap ? 1 : 0,
+                marginBottom: 12,
+              }}
+            />
+          </div>
+        </div>
 
         {/* Separator */}
-        <div className="flex items-end pb-2">
-          <div className="w-px h-10 bg-[hsl(var(--menu-separator)/0.4)] mx-1" />
+        <div className="flex items-end pb-2 mx-1">
+          <div className="w-px h-10 bg-[hsl(var(--menu-separator)/0.4)]" />
         </div>
 
         {/* Utility items: Settings + Bin */}
-        {utilityItems.map((item) => renderItem(item))}
+        <div className="flex items-end gap-1">
+          {utilityItems.map((item, i) => renderItem(item, mainItems.length + i))}
+        </div>
       </div>
 
       <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-2 rounded-full bg-[hsl(var(--menu-glow)/0.15)] blur-md" />

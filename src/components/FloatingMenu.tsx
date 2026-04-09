@@ -178,16 +178,26 @@ const FloatingMenu = () => {
     });
   }, []);
 
-  // Close on outside click
+  // Close on outside click (but not during drag operations)
+  const isDraggingRef = useRef(false);
   useEffect(() => {
+    const onDragStart = () => { isDraggingRef.current = true; };
+    const onDragEnd = () => { setTimeout(() => { isDraggingRef.current = false; }, 200); };
     const handler = (e: MouseEvent) => {
+      if (isDraggingRef.current) return;
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setMenuOpen(false);
         setPaletteOpen(false);
       }
     };
     document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("dragstart", onDragStart);
+    document.addEventListener("dragend", onDragEnd);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("dragstart", onDragStart);
+      document.removeEventListener("dragend", onDragEnd);
+    };
   }, []);
 
   // Compute directions based on position
