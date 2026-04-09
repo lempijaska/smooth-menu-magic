@@ -57,11 +57,14 @@ const Dock = () => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [insertIndex, setInsertIndex] = useState<number | null>(null);
+  const [animationsEnabled, setAnimationsEnabled] = useState(true);
   const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    setMouseX(e.clientX);
-  }, []);
+    if (animationsEnabled) {
+      setMouseX(e.clientX);
+    }
+  }, [animationsEnabled]);
 
   const handleMouseLeave = useCallback(() => {
     setMouseX(null);
@@ -70,7 +73,7 @@ const Dock = () => {
 
   const getScale = useCallback(
     (itemId: string) => {
-      if (mouseX === null) return 1;
+      if (!animationsEnabled || mouseX === null) return 1;
       const el = itemRefs.current[itemId];
       if (!el) return 1;
       const rect = el.getBoundingClientRect();
@@ -80,7 +83,7 @@ const Dock = () => {
       const scale = 1 + ((MAX_SIZE - BASE_SIZE) / BASE_SIZE) * (1 - distance / MAGNIFY_RANGE);
       return scale;
     },
-    [mouseX]
+    [mouseX, animationsEnabled]
   );
 
   const handleClick = (id: string) => {
@@ -107,10 +110,6 @@ const Dock = () => {
   const onDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(true);
-
-    // Calculate insert index based on mouse position
-    const dockEl = dockRef.current;
-    if (!dockEl) return;
 
     const mouseClientX = e.clientX;
     let bestIndex = mainItems.length;
@@ -164,13 +163,12 @@ const Dock = () => {
     }
   };
 
-  const renderItem = (item: DockItem, index: number) => {
+  const renderItem = (item: DockItem, index: number, isUtilityItem: boolean) => {
     const scale = getScale(item.id);
     const Icon = item.icon;
     const isBouncing = bouncingId === item.id;
-    const isUtility = utilityItems.some((u) => u.id === item.id);
     const isBin = item.id === "dock-trash";
-    const showInsertGap = insertIndex === index && isDragOver;
+    const showInsertGap = insertIndex === index && isDragOver && !isUtilityItem;
 
     return (
       <div
@@ -193,7 +191,7 @@ const Dock = () => {
         } : undefined}
       >
         {/* Animated insert gap */}
-        {!isUtility && (
+        {!isUtilityItem && (
           <div
             className="flex items-end justify-center overflow-hidden transition-all duration-200 ease-out"
             style={{
@@ -225,11 +223,11 @@ const Dock = () => {
             ref={(el) => {
               itemRefs.current[item.id] = el;
             }}
-            draggable={!isUtility}
+            draggable={!isUtilityItem}
             onDragStart={(e) => onDragStart(e, item)}
             onDragEnd={(e) => onDragEnd(e, item)}
             onClick={() => handleClick(item.id)}
-            className="flex items-center justify-center rounded-xl bg-secondary/80 text-foreground transition-colors duration-150 hover:bg-[hsl(var(--menu-glass-hover))] cursor-grab active:cursor-grabbing"
+            className="flex items-center justify-center rounded-xl bg-secondary/80 text-foreground transition-colors duration-150 hover:bg-accent/20 cursor-grab active:cursor-grabbing"
             style={{
               width: BASE_SIZE,
               height: BASE_SIZE,
@@ -237,7 +235,9 @@ const Dock = () => {
               transformOrigin: "bottom center",
               transition: isBouncing
                 ? "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)"
-                : "transform 0.15s ease-out",
+                : animationsEnabled
+                ? "transform 0.15s ease-out"
+                : "none",
             }}
           >
             <Icon
@@ -258,10 +258,10 @@ const Dock = () => {
     <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-50">
       <div
         ref={dockRef}
-        className={`flex items-end px-3 py-2 rounded-2xl border bg-[hsl(var(--menu-glass)/0.8)] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-colors ${
+        className={`flex items-end px-3 py-2 rounded-2xl border bg-card/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] transition-colors ${
           isDragOver
             ? "border-primary/40"
-            : "border-[hsl(var(--menu-glass-border))]"
+            : "border-border"
         }`}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -269,9 +269,9 @@ const Dock = () => {
         onDragLeave={onDragLeave}
         onDrop={onDrop}
       >
-        {/* Main items with equal gap */}
+        {/* Main items */}
         <div className="flex items-end gap-1">
-          {mainItems.map((item, i) => renderItem(item, i))}
+          {mainItems.map((item, i) => renderItem(item, i, false))}
 
           {/* Trailing insert gap */}
           <div
@@ -293,19 +293,24 @@ const Dock = () => {
           </div>
         </div>
 
-        {/* Separator */}
+        {/* Single separator */}
         <div className="flex items-end pb-2 mx-1">
-          <div className="w-px h-10 bg-[hsl(var(--menu-separator)/0.4)]" />
+          <div className="w-px h-10 bg-border" />
         </div>
 
         {/* Utility items: Settings + Bin */}
         <div className="flex items-end gap-1">
-          {utilityItems.map((item, i) => renderItem(item, mainItems.length + i))}
+          {utilityItems.map((item, i) => renderItem(item, mainItems.length + i, true))}
         </div>
       </div>
 
-      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-2 rounded-full bg-[hsl(var(--menu-glow)/0.15)] blur-md" />
-      <DockSettings open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3/4 h-2 rounded-full bg-primary/10 blur-md" />
+      <DockSettings
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        animationsEnabled={animationsEnabled}
+        onAnimationsChange={setAnimationsEnabled}
+      />
     </div>
   );
 };
